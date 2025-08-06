@@ -170,10 +170,13 @@ diff --git a/Collage/app.js b/Collage/app.js
 diff --git a/Collage/app.css b/Collage/app.css
 --- a/Collage/app.css
 +++ b/Collage/app.css
-@@ ... @@
-+/* Optional for enhanced number input */
-+.paired-number { width: 84px; }
+@@ -0,0 +1,3 @@
++.paired-number {
++  width: 84px;
++}
 diff --git a/Collage/collage.js b/Collage/collage.js
+--- a/Collage/collage.js
++++ b/Collage/collage.js
 @@ ... @@
 +// ------ Matrix helpers for image-space transforms ------
 +function matIdentity(){ return [1,0,0,1,0,0]; }
