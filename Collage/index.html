@@ -2,1196 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Procedural Image Lab - Run Anywhere</title>
+  <title>Botanical Collage Layer Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#0f1220;
-      --panel:#171b2e;
-      --muted:#95a1c3;
-      --text:#e7ebff;
-      --accent:#6dd2ff;
-      --accent-2:#8d7bff;
-      --ok:#49d98f;
-      --warn:#ffb454;
-      --err:#ff6b6b;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius:14px;
-      --radius-sm:10px;
-      --radius-xs:8px;
-      --gap:14px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: radial-gradient(1200px 800px at 110% -10%, #1b2140 0%, #0f1220 50%), var(--bg);
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    }
-    a{color:var(--accent); text-decoration:none}
-    a:hover{text-decoration:underline}
-    header{
-      padding:22px clamp(14px, 3vw, 28px);
-      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    }
-    .logo{
-      width:40px;height:40px;border-radius:12px;
-      background: conic-gradient(from 230deg, var(--accent), var(--accent-2), #3de0ff, #7af0bf, var(--accent));
-      position:relative; box-shadow: var(--shadow);
-    }
-    .title h1{margin:0;font-size:clamp(18px, 2.6vw, 28px); letter-spacing:.2px}
-    .title p{margin:2px 0 0; color:var(--muted); font-size:.95rem}
-    main{
-      display:grid; gap:20px; grid-template-columns: 360px 1fr;
-      padding:0 clamp(14px, 3vw, 28px) 28px;
-    }
-    @media (max-width: 980px){
-      main{grid-template-columns: 1fr}
-    }
-    .panel{
-      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)) , var(--panel);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .controls{
-      padding:18px;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
-    }
-    .row{display:grid; gap:10px}
-    label{font-size:.9rem; color:#cfd6ff}
-    input[type="text"], input[type="number"], select, textarea{
-      width:100%;
-      padding:12px 12px;
-      color:var(--text);
-      background:#0d1020;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius: var(--radius-sm);
-      outline:none;
-      transition:.2s border-color, .2s box-shadow, .2s background;
-    }
-    textarea{min-height:76px; resize:vertical}
-    input[type="range"]{
-      width:100%;
-    }
-    .inline{
-      display:grid; grid-template-columns: 1fr 110px; gap:10px; align-items:center;
-    }
-    .btn{
-      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent), #1e2342;
-      border:1px solid rgba(255,255,255,.14);
-      color:var(--text);
-      padding:12px 14px;
-      border-radius:12px;
-      cursor:pointer;
-      display:inline-flex; align-items:center; gap:10px;
-      justify-content:center;
-      transition:.2s transform, .2s background, .2s box-shadow, .2s border-color;
-      user-select:none;
-    }
-    .btn.primary{
-      background:linear-gradient(180deg, rgba(255,255,255,.10), transparent), linear-gradient(90deg, var(--accent), var(--accent-2));
-      color:#0b0e1f; font-weight:700; border-color: transparent;
-      text-shadow: 0 1px 0 rgba(255,255,255,.35);
-    }
-    .btn:hover{transform: translateY(-1px)}
-    .btn:active{transform: translateY(0)}
-    .btn-row{display:flex; gap:10px; flex-wrap:wrap}
-    .canvas-wrap{
-      padding:16px;
-    }
-    .workspace{
-      display:grid; gap:14px; grid-template-rows: auto 1fr auto;
-      height: calc(100vh - 170px);
-      min-height: 520px;
-    }
-    .tabs{
-      display:flex; gap:8px; padding:12px 12px 0 12px; flex-wrap:wrap;
-    }
-    .tab{
-      padding:10px 12px; border-radius: 10px 10px 0 0;
-      border:1px solid rgba(255,255,255,.10);
-      border-bottom:none;
-      background: rgba(13,16,32,.7);
-      color:#cfe0ff; cursor:pointer; font-size:.92rem;
-    }
-    .tab.active{
-      background:#121633; color:#fff; font-weight:600;
-    }
-    .board{
-      border-top:1px solid rgba(255,255,255,.10);
-      background: #121633;
-      border-radius: 0 12px 12px 12px;
-      padding: 14px;
-      height:100%; display:grid; grid-template-columns: 1fr 300px; gap:12px;
-    }
-    @media (max-width: 1100px){
-      .board{grid-template-columns: 1fr}
-    }
-    .stage{
-      background:#0b0f24;
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 12px;
-      position:relative;
-      min-height: 300px;
-      display:grid; place-items:center;
-      overflow:hidden;
-    }
-    canvas{max-width:100%; max-height:100%;}
-    .side{
-      display:grid; gap:12px;
-    }
-    .card{
-      background:#0e1230;
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 12px; padding:12px;
-    }
-    .muted{color:var(--muted)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:4px 8px; background:#13183a; border:1px solid rgba(255,255,255,.10);
-      border-radius: 999px; font-size:.82rem; color:#d3dafe;
-    }
-    .grid-2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
-    @media (max-width:560px){ .grid-2{grid-template-columns: 1fr} }
-    .kbd{
-      border:1px solid rgba(255,255,255,.16);
-      padding:2px 6px; border-radius:6px; background:#0b0f24; font-size:.85em;
-    }
-    footer{
-      padding: 18px clamp(14px, 3vw, 28px) 40px;
-      color:var(--muted); font-size:.92rem;
-    }
-    .sources { display:flex; flex-wrap:wrap; gap:10px; }
-    .badge { background:#10173a; border:1px solid rgba(255,255,255,.12); padding:6px 10px; border-radius:999px }
-    .hint{font-size:.9rem; color:#cbd3fb}
-    .status{
-      font-size:.9rem; color:#cfe0ff; display:flex; align-items:center; gap:8px;
-    }
-    .swatch{
-      width:18px; height:18px; border-radius:4px; border:1px solid rgba(255,255,255,.15);
-    }
-    .gallery{
-      display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:10px;
-      max-height:240px; overflow:auto;
-    }
-    .thumb{
-      background:#0b0f24; border:1px solid rgba(255,255,255,.1);
-      border-radius:10px; overflow:hidden; position:relative;
-      cursor:pointer;
-    }
-    .thumb img{display:block; width:100%; height:auto}
-    .thumb .meta{
-      position:absolute; bottom:6px; left:6px; right:6px;
-      background: rgba(0,0,0,.4); backdrop-filter: blur(2px);
-      color:#eaf0ff; font-size:.78rem; padding:4px 6px; border-radius:6px;
-    }
-    .kbd-row{display:flex; gap:10px; flex-wrap:wrap}
-    .small{font-size:.85rem}
-    .slider-row{ display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center }
-    .number{ width:82px }
-    .hr{ height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent) }
-    .files{
-      display:grid; gap:10px; grid-template-columns: 1fr 1fr; margin-top:10px;
-    }
-    @media (max-width:720px){ .files{grid-template-columns: 1fr} }
-    .filecard{
-      background:#0c1130; border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px;
-    }
-    .filecard header{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
-    .filecard .name{font-weight:600}
-    .dlbtn{
-      font-size:.9rem; padding:6px 10px;
-      background:#12205a; border:1px solid rgba(255,255,255,.18); border-radius:8px; color:#e7ebff; cursor:pointer;
-    }
-  </style>
-
-  <meta name="description" content="Procedural Image Lab: an offline, self-contained app to generate and edit images with noise, shapes, and palettes. No external assets required." />
-
-  <script type="importmap">
-  {
-    "imports": {
-      "lodash-es": "https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/lodash.esm.min.js",
-      "tinycolor2": "https://cdn.jsdelivr.net/npm/tinycolor2@1.6.0/tinycolor2.es.min.js"
-    }
-  }
-  </script>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="stylesheet" href="app.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1220" />
 </head>
 <body>
-  <header>
-    <div class="logo" aria-hidden="true"></div>
-    <div class="title">
-      <h1>Procedural Image Lab</h1>
-      <p class="muted">Fully self-contained art generator. No external models or assets. Ready for GitHub Pages.</p>
+  <a class="skip" href="#main">Skip to canvas</a>
+
+  <header class="ribbon" id="ribbon" role="banner" data-mode="show" data-locked="false">
+    <div class="ribbon-row">
+      <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
+        <button class="btn primary" data-action="generate" title="Generate (G)">Generate</button>
+        <button class="btn" data-action="shuffle" title="Shuffle (S)">Shuffle</button>
+        <button class="btn" data-action="export" title="Export PNG (E)">Export</button>
+        <button class="btn" data-action="exportJSON" title="Export JSON">Export JSON</button>
+        <button class="btn" data-action="batch" title="Batch x10 (B)">Batch x10</button>
+        <div class="divider" aria-hidden="true"></div>
+        <div class="status" id="status" role="status" aria-live="polite">idle</div>
+      </div>
+      <div class="ribbon-right">
+        <span class="badge lock-badge" id="ribbonLockBadge" aria-hidden="true">Locked</span>
+        <div class="dropdown">
+          <button id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="ribbonMenu">Ribbon ▾</button>
+          <div id="ribbonMenu" class="menu" role="menu" aria-labelledby="ribbonMenuBtn">
+            <button role="menuitemradio" data-mode="show" aria-checked="true">Show</button>
+            <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide</button>
+            <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact</button>
+            <hr />
+            <button role="menuitemcheckbox" id="lockToggle" aria-checked="false">Lock ribbon</button>
+            <hr />
+            <button id="toggleContrast" role="menuitemcheckbox" aria-checked="false">High contrast</button>
+            <button id="toggleMotion" role="menuitemcheckbox" aria-checked="false">Reduced motion</button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main>
-    <section class="panel">
-      <div class="controls">
-        <div class="row">
-          <label for="prompt">Prompt (influences seeded randomness)</label>
-          <textarea id="prompt" placeholder="e.g., dreamy neon mountains with stars"></textarea>
-        </div>
+  <div class="wrap" id="main">
+    <nav class="sidebar" aria-label="Parameters">
+      <h2 class="title">Settings</h2>
 
-        <div class="row grid-2">
-          <div>
-            <label for="seed">Seed</label>
-            <div class="inline">
-              <input id="seed" type="number" placeholder="random" />
-              <button id="randomizeSeed" class="btn" title="Random seed">🎲 Random</button>
-            </div>
-          </div>
-          <div>
-            <label for="style">Style</label>
-            <select id="style">
-              <option value="nebula">Nebula</option>
-              <option value="lowpoly">Low Poly</option>
-              <option value="quilt">Quilt</option>
-              <option value="orbs">Orbs</option>
-              <option value="terrain">Terrain</option>
-              <option value="flow">Flow Field</option>
-            </select>
-          </div>
-        </div>
+      <fieldset class="group">
+        <legend>Photos</legend>
+        <input id="file" type="file" accept="image/*" multiple />
+        <p class="hint">Drop or choose images. Processing stays on your device.</p>
+        <div class="images" id="images"></div>
+      </fieldset>
 
-        <div class="row">
-          <label>Size</label>
-          <div class="grid-2">
-            <div class="inline">
-              <input id="width" type="number" value="768" min="64" max="2048" step="1" />
-              <span class="pill">W</span>
-            </div>
-            <div class="inline">
-              <input id="height" type="number" value="512" min="64" max="2048" step="1" />
-              <span class="pill">H</span>
-            </div>
-          </div>
-        </div>
+      <fieldset class="group">
+        <legend>Canvas & Seed</legend>
+        <label class="param"><span>Width</span><input id="w" type="number" min="256" max="12000" value="3000" /></label>
+        <label class="param"><span>Height</span><input id="h" type="number" min="256" max="12000" value="2000" /></label>
+        <label class="param"><span>Seed</span><input id="seed" type="number" placeholder="optional" /></label>
+        <label class="param"><span>DPI label</span><input id="dpiLabel" type="text" placeholder="e.g., 300 dpi (label only)" /></label>
+      </fieldset>
 
-        <div class="row">
-          <label for="detail">Detail</label>
-          <div class="slider-row">
-            <input id="detail" type="range" min="1" max="10" step="1" value="6" />
-            <input id="detailNum" class="number" type="number" min="1" max="10" step="1" value="6" />
-          </div>
-          <div class="hint small">Higher detail adds more layers or particles depending on the style.</div>
-        </div>
+      <fieldset class="group">
+        <legend>Negative Space & Limits</legend>
+        <label class="param"><span>Negative Space %</span><input id="negSpace" type="range" min="10" max="70" value="35" /></label>
+        <label class="param"><span>Max Element %</span><input id="maxElem" type="range" min="5" max="30" value="22" /></label>
+      </fieldset>
 
-        <div class="row">
-          <label>Palette</label>
-          <div class="btn-row">
-            <button class="btn" data-palette="aurora"><span class="swatch" style="background: linear-gradient(90deg,#70f,#0ff)"></span>Aurora</button>
-            <button class="btn" data-palette="sunset"><span class="swatch" style="background: linear-gradient(90deg,#ff9966,#ff5e62)"></span>Sunset</button>
-            <button class="btn" data-palette="forest"><span class="swatch" style="background: linear-gradient(90deg,#1dd1a1,#10ac84)"></span>Forest</button>
-            <button class="btn" data-palette="mono"><span class="swatch" style="background: linear-gradient(90deg,#111,#ddd)"></span>Mono</button>
-            <button id="shufflePalette" class="btn">🔀 Shuffle</button>
-          </div>
+      <fieldset class="group">
+        <legend>Tiles</legend>
+        <label class="param"><span>Tile Count</span><input id="tileCount" type="range" min="42" max="96" value="60" /></label>
+        <label class="param"><span>Special %</span><input id="specialPct" type="range" min="10" max="60" value="28" /></label>
+        <label class="param"><span>Size Mean %</span><input id="sizeMean" type="range" min="1" max="6" value="3" /></label>
+        <label class="param"><span>Size Spread %</span><input id="sizeSpread" type="range" min="1" max="8" value="3" /></label>
+        <label class="param"><span>Rot range °</span><input id="rotRange" type="range" min="5" max="75" value="35" /></label>
+        <label class="param"><span>Skew range °</span><input id="skewRange" type="range" min="0" max="20" value="8" /></label>
+        <div class="toggle-row">
+          <label class="toggle"><input id="allowRect" type="checkbox" checked />Rectangles</label>
+          <label class="toggle"><input id="allowScissor" type="checkbox" checked />Scissor-cut</label>
+          <label class="toggle"><input id="allowTorn" type="checkbox" checked />Torn</label>
         </div>
+        <label class="param"><span>Scissor Jaggedness</span><input id="scissorJag" type="range" min="0" max="100" value="45" /></label>
+        <label class="param"><span>Torn Roughness</span><input id="tornRough" type="range" min="0" max="100" value="55" /></label>
+      </fieldset>
 
-        <div class="row btn-row">
-          <button id="generate" class="btn primary">✨ Generate</button>
-          <button id="download" class="btn">⬇️ Download PNG</button>
-          <button id="addToGallery" class="btn">🖼️ Add to Gallery</button>
-          <span id="status" class="status">Ready</span>
+      <fieldset class="group">
+        <legend>Strips</legend>
+        <label class="param"><span>Count</span><input id="stripCount" type="range" min="0" max="20" value="7" /></label>
+        <label class="param"><span>Thickness %</span><input id="stripThick" type="range" min="1" max="15" value="4" /></label>
+        <label class="param"><span>Opacity %</span><input id="stripOpacity" type="range" min="76" max="100" value="88" /></label>
+        <label class="param"><span>Angle min from 0/90</span><input id="angleMin" type="range" min="10" max="30" value="18" /></label>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>Clusters</legend>
+        <label class="param"><span>Count</span><input id="clusterCount" type="range" min="0" max="9" value="3" /></label>
+        <label class="param"><span>Tiles per Cluster</span><input id="clusterTiles" type="range" min="5" max="17" value="9" /></label>
+        <label class="param"><span>Opacity %</span><input id="clusterOpacity" type="range" min="76" max="100" value="90" /></label>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>Easter Eggs</legend>
+        <label class="param"><span>Count</span><input id="eggCount" type="range" min="0" max="7" value="3" /></label>
+        <label class="param"><span>Max Size %</span><input id="eggSize" type="range" min="0.2" max="3" step="0.1" value="1" /></label>
+      </fieldset>
+
+      <div class="group row">
+        <span class="kbdhint">Shortcuts: G Generate · S Shuffle · E Export</span>
+      </div>
+    </nav>
+
+    <section class="stage">
+      <div class="canvas-bar">
+        <span>Preview</span>
+        <div class="canvas-actions">
+          <button class="btn small" data-action="fit">Fit</button>
+          <button class="btn small" data-action="1x">100%</button>
         </div>
-
-        <div class="hr"></div>
-
-        <div class="row">
-          <label>Keyboard Shortcuts</label>
-          <div class="kbd-row">
-            <span class="pill"><span class="kbd">G</span> Generate</span>
-            <span class="pill"><span class="kbd">S</span> Download</span>
-            <span class="pill"><span class="kbd">R</span> Random Seed</span>
-          </div>
-        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="c" aria-label="Collage canvas" role="img"></canvas>
+      </div>
+      <div class="canvas-footer">
+        <span id="meta"></span>
       </div>
     </section>
+  </div>
 
-    <section class="panel workspace">
-      <div class="tabs">
-        <button class="tab active" data-tab="editor">Editor</button>
-        <button class="tab" data-tab="gallery">Gallery</button>
-        <button class="tab" data-tab="about">About</button>
-      </div>
-
-      <div class="board">
-        <div class="stage">
-          <canvas id="canvas" width="768" height="512" aria-label="Generated image"></canvas>
-        </div>
-        <div class="side">
-          <div class="card">
-            <div class="row">
-              <strong>Live Parameters</strong>
-              <div class="small muted">Preview of the parameters used to generate the current image.</div>
-            </div>
-            <pre id="params" class="mono small" style="white-space: pre-wrap;"></pre>
-          </div>
-          <div class="card">
-            <div class="row">
-              <strong>Palette Colors</strong>
-              <div id="palettePreview" class="btn-row"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="row">
-              <strong>Gallery</strong>
-              <div class="gallery" id="miniGallery"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel canvas-wrap">
-        <div class="hint">Tip: Use a descriptive prompt to change the seeded palette and motion cues. Everything runs locally.</div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div>This self-contained app demonstrates a procedural alternative to server-based generative image tools and UI concepts often built with frameworks like Streamlit or React.</div>
-    <div class="sources" style="margin-top:10px">
-      <span class="badge">Related reading:</span>
-      <a class="badge" target="_blank" rel="noopener" href="https://github.com/kapilraghuwanshi/gen-ai-image-generator">kapilraghuwanshi/gen-ai-image-generator</a>
-      <a class="badge" target="_blank" rel="noopener" href="https://github.com/tonykipkemboi/streamlit-replicate-img-app">tonykipkemboi/streamlit-replicate-img-app</a>
-      <a class="badge" target="_blank" rel="noopener" href="https://github.com/Ramseths/app-llama2">Ramseths/app-llama2</a>
-      <a class="badge" target="_blank" rel="noopener" href="https://github.com/flyfir248/Microsoft-Phi-2-Streamlit-App">flyfir248/Microsoft-Phi-2-Streamlit-App</a>
-      <a class="badge" target="_blank" rel="noopener" href="https://github.com/eric3119/streamlit-app">eric3119/streamlit-app</a>
-    </div>
-    <div class="small" style="margin-top:8px">
-      Inspiration: Many web UIs for generative models expose prompts, seeds, and parameters, often with galleries and downloads as seen in community examples on GitHub like React-based image generators and Streamlit apps [github.com](https://github.com/kapilraghuwanshi/gen-ai-image-generator) [github.com](https://github.com/tonykipkemboi/streamlit-replicate-img-app) [github.com](https://github.com/Ramseths/app-llama2) [github.com](https://github.com/flyfir248/Microsoft-Phi-2-Streamlit-App) [github.com](https://github.com/eric3119/streamlit-app).
-    </div>
-
-    <div class="card" style="margin-top:16px">
-      <strong>Downloadable files</strong>
-      <div class="small muted">Click to download each file for your GitHub repo.</div>
-      <div class="files">
-        <div class="filecard">
-          <header>
-            <span class="name">index.html</span>
-            <button class="dlbtn" data-download="index.html">Download</button>
-          </header>
-          <div class="small">Main self-contained app file. Place at repo root.</div>
-        </div>
-        <div class="filecard">
-          <header>
-            <span class="name">README.md</span>
-            <button class="dlbtn" data-download="README.md">Download</button>
-          </header>
-          <div class="small">Basic instructions and Pages setup notes.</div>
-        </div>
-        <div class="filecard">
-          <header>
-            <span class="name">.nojekyll</span>
-            <button class="dlbtn" data-download=".nojekyll">Download</button>
-          </header>
-          <div class="small">Prevents Jekyll processing on GitHub Pages.</div>
-        </div>
-        <div class="filecard">
-          <header>
-            <span class="name">.github/workflows/pages.yml</span>
-            <button class="dlbtn" data-download=".github/workflows/pages.yml">Download</button>
-          </header>
-          <div class="small">Optional CI workflow to deploy Pages on push.</div>
-        </div>
-        <div class="filecard">
-          <header>
-            <span class="name">LICENSE</span>
-            <button class="dlbtn" data-download="LICENSE">Download</button>
-          </header>
-          <div class="small">MIT license by default; edit as desired.</div>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <script type="module">
-    import { clamp } from "lodash-es";
-    import tinycolor from "tinycolor2";
-
-    // Utilities
-    const $ = sel => document.querySelector(sel);
-    const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-    function hashString(str){
-      // xmur3-like
-      let h = 1779033703 ^ str.length;
-      for(let i=0;i<str.length;i++){
-        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-        h = (h<<13) | (h>>>19);
-      }
-      h = Math.imul(h ^ (h>>>16), 2246822507);
-      h = Math.imul(h ^ (h>>>13), 3266489909);
-      return (h ^ (h>>>16)) >>> 0;
+  <script src="app.js"></script>
+  <script src="collage.js"></script>
+  <script>
+    // Register service worker if present
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
     }
-
-    function mulberry32(a){
-      return function(){
-        let t = a += 0x6D2B79F5;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function seededShuffle(arr, rand){
-      const a = arr.slice();
-      for (let i=a.length-1;i>0;i--){
-        const j = Math.floor(rand()* (i+1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
-    function choice(arr, rand){
-      return arr[Math.floor(rand()*arr.length)];
-    }
-
-    // Palettes
-    const PALETTES = {
-      aurora: ["#6dd2ff","#8d7bff","#2ef2ff","#7af0bf","#1e90ff"],
-      sunset: ["#ff9966","#ff5e62","#ffd26f","#ff7eb3","#ff3d77"],
-      forest: ["#0a3d2e","#1dd1a1","#10ac84","#2e8b57","#0b8457"],
-      mono: ["#0a0a0a","#3a3a3a","#777","#bdbdbd","#f0f0f0"]
-    };
-
-    function promptToPalette(prompt, rand){
-      // derive base hue from prompt
-      const h = (hashString(prompt) % 360);
-      const base = tinycolor({ h, s: clamp(0.45 + (rand()-0.5)*0.3, 0.2, 0.9), v: clamp(0.9 - rand()*0.15, 0.5, 0.95) });
-      const tri = [0, 120, 240].map(d => base.clone().spin(d));
-      const palette = [];
-      tri.forEach(tc => {
-        palette.push(tc.clone().brighten(5).toHexString());
-        palette.push(tc.clone().darken(15).saturate(10).toHexString());
-      });
-      // mix in white/black tints
-      palette.push(tinycolor.mix(base, "#ffffff", 70).toHexString());
-      palette.push(tinycolor.mix(base, "#000000", 70).toHexString());
-      return seededShuffle(palette, rand).slice(0, 6);
-    }
-
-    // Generators
-    const Generators = {
-      nebula(ctx, W, H, rand, detail, palette){
-        // Multi-layer soft blobs using radial gradients and simplex-like turbulence via fbm noise
-        const off = document.createElement("canvas");
-        off.width = W; off.height = H;
-        const octx = off.getContext("2d");
-
-        // Background gradient
-        const bg = octx.createLinearGradient(0,0, W,H);
-        const c1 = choice(palette, rand), c2 = choice(palette, rand);
-        bg.addColorStop(0, tinycolor(c1).darken(30).desaturate(20).toHexString());
-        bg.addColorStop(1, tinycolor(c2).darken(40).desaturate(20).toHexString());
-        octx.fillStyle = bg;
-        octx.fillRect(0,0,W,H);
-
-        // Procedural soft blobs
-        const layers = 20 + detail*6;
-        for(let i=0;i<layers;i++){
-          const x = rand()*W, y = rand()*H;
-          const r = (Math.min(W,H) * (0.2 + rand()*0.35)) * (1 - i/layers*0.6);
-          const g = octx.createRadialGradient(x,y, r*0.1, x,y, r);
-          const col = tinycolor(choice(palette,rand));
-          const alpha = clamp(0.06 + rand()*0.12, 0.04, 0.22);
-          g.addColorStop(0, col.setAlpha(alpha).toRgbString());
-          g.addColorStop(1, col.setAlpha(0).toRgbString());
-          octx.globalCompositeOperation = rand() > 0.5 ? "lighter" : "screen";
-          octx.fillStyle = g;
-          octx.beginPath();
-          octx.arc(x,y,r,0,Math.PI*2);
-          octx.fill();
-        }
-        // Stars
-        octx.globalCompositeOperation = "screen";
-        const stars = 800 + detail*200;
-        octx.fillStyle = "white";
-        for(let i=0;i<stars;i++){
-          const x = rand()*W, y = rand()*H;
-          const s = rand()<0.03 ? rand()*2.2+0.8 : rand()*1.2;
-          octx.globalAlpha = clamp(0.3 + rand()*0.7,0.2,1);
-          octx.fillRect(x,y,s,s);
-        }
-        ctx.drawImage(off,0,0);
-      },
-
-      lowpoly(ctx, W, H, rand, detail, palette){
-        // Triangulated polygons
-        const cols = Math.floor(8 + detail*2);
-        const rows = Math.floor(6 + detail*2);
-        const dx = W / cols;
-        const dy = H / rows;
-
-        // jittered grid points
-        const pts = [];
-        for(let y=0;y<=rows;y++){
-          for(let x=0;x<=cols;x++){
-            const jx = (rand()-0.5)*dx*0.7;
-            const jy = (rand()-0.5)*dy*0.7;
-            pts.push({ x: x*dx + jx, y: y*dy + jy });
-          }
-        }
-
-        // Draw triangles
-        ctx.fillStyle = tinycolor(choice(palette, rand)).darken(30).toHexString();
-        ctx.fillRect(0,0,W,H);
-        for(let y=0;y<rows;y++){
-          for(let x=0;x<cols;x++){
-            const i = y*(cols+1)+x;
-            const p1 = pts[i], p2 = pts[i+1], p3 = pts[i+cols+1], p4 = pts[i+cols+2];
-            const triA = [p1,p2,p3];
-            const triB = [p3,p2,p4];
-
-            [triA, triB].forEach(tri=>{
-              ctx.beginPath();
-              ctx.moveTo(tri[0].x, tri[0].y);
-              ctx.lineTo(tri[1].x, tri[1].y);
-              ctx.lineTo(tri[2].x, tri[2].y);
-              ctx.closePath();
-              let col = tinycolor(choice(palette, rand));
-              // shade based on centroid
-              const cx = (tri[0].x + tri[1].x + tri[2].x)/3;
-              const cy = (tri[0].y + tri[1].y + tri[2].y)/3;
-              const shade = (cx/W*0.7 + cy/H*0.7) - 0.5 + (rand()-0.5)*0.3;
-              col = shade>0 ? col.darken(shade*25) : col.brighten(-shade*25);
-              ctx.fillStyle = col.toHexString();
-              ctx.fill();
-            });
-          }
-        }
-      },
-
-      quilt(ctx, W, H, rand, detail, palette){
-        // Patchwork squares with stitched lines
-        const size = Math.max(24, Math.floor(Math.min(W,H)/ (6 + detail)));
-        const cols = Math.ceil(W/size);
-        const rows = Math.ceil(H/size);
-
-        // background
-        ctx.fillStyle = tinycolor(choice(palette,rand)).desaturate(40).darken(20).toHexString();
-        ctx.fillRect(0,0,W,H);
-
-        for(let y=0;y<rows;y++){
-          for(let x=0;x<cols;x++){
-            const px = x*size, py = y*size;
-            const pad = 4;
-            const w = size - pad*2, h = size - pad*2;
-            const r = 8;
-            const col = tinycolor(choice(palette, rand))
-              .spin((rand()-0.5)*20)
-              .saturate(20*rand())
-              .toHexString();
-
-            roundRect(ctx, px+pad, py+pad, w, h, r);
-            ctx.fillStyle = col; ctx.fill();
-
-            // texture lines
-            ctx.globalAlpha = 0.15;
-            ctx.strokeStyle = tinycolor(col).darken(20).toHexString();
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            for(let i=0;i<h;i+=4){
-              ctx.moveTo(px+pad + (rand()*4), py+pad+i + (rand()*2));
-              ctx.lineTo(px+pad+w - (rand()*4), py+pad+i + (rand()*2));
-            }
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-
-            // stitches
-            ctx.strokeStyle = "#fff8";
-            ctx.setLineDash([4,3]);
-            ctx.lineDashOffset = rand()*10;
-            ctx.strokeRect(px+pad,py+pad,w,h);
-            ctx.setLineDash([]);
-          }
-        }
-      },
-
-      orbs(ctx, W, H, rand, detail, palette){
-        // Soft overlapping orbs with additive blend
-        ctx.fillStyle = tinycolor(choice(palette,rand)).darken(40).toHexString();
-        ctx.fillRect(0,0,W,H);
-        const n = 30 + detail*15;
-        ctx.globalCompositeOperation = "lighter";
-        for(let i=0;i<n;i++){
-          const x = rand()*W, y = rand()*H;
-          const r = Math.min(W,H) * (0.05 + rand()*0.2);
-          const g = ctx.createRadialGradient(x,y, r*0.2, x,y, r);
-          const c = tinycolor(choice(palette,rand));
-          g.addColorStop(0, c.clone().setAlpha(0.25 + rand()*0.5).toRgbString());
-          g.addColorStop(1, c.clone().setAlpha(0).toRgbString());
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-        }
-        ctx.globalCompositeOperation = "source-over";
-      },
-
-      terrain(ctx, W, H, rand, detail, palette){
-        // Heightmapped bands using fbm noise
-        const bg = tinycolor(choice(palette,rand)).desaturate(50).darken(35).toHexString();
-        ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
-
-        const rows = 5 + detail;
-        for(let r=0;r<rows;r++){
-          const col = tinycolor(choice(palette,rand)).desaturate(20).darken(r*5);
-          const yBase = (H/(rows+1))*(r+1);
-          const amp = H*0.12 * (1 - r/rows);
-          const yPoints = [];
-          const steps = 200;
-          const n = fbmFactory(rand);
-          for(let i=0;i<=steps;i++){
-            const t = i/steps;
-            const x = t*W;
-            const y = yBase - noise1D(n, t*2 + r*1.7)*amp;
-            yPoints.push({x,y});
-          }
-          ctx.beginPath();
-          ctx.moveTo(0,H);
-          yPoints.forEach(p=> ctx.lineTo(p.x, p.y));
-          ctx.lineTo(W,H);
-          ctx.closePath();
-          ctx.fillStyle = col.setAlpha(0.9 - r*(0.7/rows)).toRgbString();
-          ctx.fill();
-        }
-      },
-
-      flow(ctx, W, H, rand, detail, palette){
-        // Flow field streamlines
-        const bg = tinycolor(choice(palette,rand)).desaturate(50).darken(40).toHexString();
-        ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
-
-        const n = fbmFactory(rand);
-        const particles = 500 + detail*400;
-        const steps = 120 + detail*20;
-        const speed = 1.6;
-        const hueCol = choice(palette, rand);
-
-        ctx.lineWidth = 0.6;
-        ctx.globalAlpha = 0.7;
-        ctx.globalCompositeOperation = "lighter";
-
-        for(let i=0;i<particles;i++){
-          let x = rand()*W, y = rand()*H;
-          const c = tinycolor(hueCol).spin((rand()-0.5)*40).setAlpha(0.3 + rand()*0.6).toRgbString();
-          ctx.strokeStyle = c;
-          ctx.beginPath();
-          ctx.moveTo(x,y);
-          for(let s=0;s<steps;s++){
-            const angle = noise2D(n, x*0.002, y*0.002) * Math.PI*2;
-            x += Math.cos(angle)*speed;
-            y += Math.sin(angle)*speed;
-            if(x<0||x>W||y<0||y>H) break;
-            ctx.lineTo(x,y);
-          }
-          ctx.stroke();
-        }
-        ctx.globalCompositeOperation = "source-over";
-        ctx.globalAlpha = 1;
-      }
-    };
-
-    // Drawing helpers
-    function roundRect(ctx, x,y,w,h,r){
-      const rr = Math.min(r, w/2, h/2);
-      ctx.beginPath();
-      ctx.moveTo(x+rr,y);
-      ctx.arcTo(x+w,y,x+w,y+h,rr);
-      ctx.arcTo(x+w,y+h,x,y+h,rr);
-      ctx.arcTo(x,y+h,x,y,rr);
-      ctx.arcTo(x,y,x+w,y,rr);
-      ctx.closePath();
-    }
-
-    // Simple fbm noise based on value noise
-    function fbmFactory(rand){
-      const perm = new Uint8Array(512);
-      for(let i=0;i<256;i++) perm[i] = i;
-      for(let i=255;i>0;i--){
-        const j = Math.floor(rand()*(i+1));
-        const t = perm[i]; perm[i]=perm[j]; perm[j]=t;
-      }
-      for(let i=0;i<256;i++) perm[i+256] = perm[i];
-
-      function fade(t){return t*t*t*(t*(t*6-15)+10)}
-      function lerp(a,b,t){return a + (b-a)*t}
-
-      function grad1(hash, x){
-        const h = hash & 15;
-        let g = 1 + (h & 7);
-        if (h & 8) g = -g;
-        return g*x;
-      }
-
-      function noise1(x){
-        let X = Math.floor(x) & 255;
-        x -= Math.floor(x);
-        const u = fade(x);
-        const a = grad1(perm[X], x);
-        const b = grad1(perm[X+1], x-1);
-        return lerp(a,b,u)*0.7;
-      }
-      function noise2(x,y){
-        const X = Math.floor(x) & 255;
-        const Y = Math.floor(y) & 255;
-        const xf = x - Math.floor(x);
-        const yf = y - Math.floor(y);
-        const u = fade(xf);
-        const v = fade(yf);
-        const aa = perm[X + perm[Y]];
-        const ab = perm[X + perm[Y+1]];
-        const ba = perm[X+1 + perm[Y]];
-        const bb = perm[X+1 + perm[Y+1]];
-
-        function grad2(h, x, y){
-          const u = (h&1)?x:-x;
-          const v = (h&2)?y:-y;
-          return u+v;
-        }
-        const x1 = lerp(grad2(aa, xf, yf), grad2(ba, xf-1, yf), u);
-        const x2 = lerp(grad2(ab, xf, yf-1), grad2(bb, xf-1, yf-1), u);
-        return lerp(x1,x2,v)*0.6;
-      }
-
-      return { noise1, noise2 };
-    }
-
-    function noise1D(n, t){
-      // fbm 1D
-      let v=0, amp=0.5, freq=1.0;
-      for(let i=0;i<5;i++){
-        v += n.noise1(t*freq)*amp;
-        freq *= 2.02; amp *= 0.5;
-      }
-      // map to 0..1
-      return (v*0.5)+0.5;
-    }
-    function noise2D(n, x,y){
-      let v=0, amp=0.5, freq=1.0;
-      for(let i=0;i<4;i++){
-        v += n.noise2(x*freq, y*freq)*amp;
-        freq *= 2.03; amp *= 0.5;
-      }
-      return (v*0.5)+0.5;
-    }
-
-    // State
-    const canvas = $("#canvas");
-    const ctx = canvas.getContext("2d");
-    const state = {
-      style: "nebula",
-      paletteName: "aurora",
-      palette: PALETTES["aurora"].slice(),
-      width: canvas.width,
-      height: canvas.height,
-      detail: 6,
-      prompt: "",
-      seed: null,
-      rand: Math.random
-    };
-
-    // UI Bindings
-    $("#style").addEventListener("change", e => { state.style = e.target.value; updateParams(); });
-    $("#width").addEventListener("input", e => { state.width = clamp(parseInt(e.target.value||0,10), 64, 4096); syncCanvasSize(); });
-    $("#height").addEventListener("input", e => { state.height = clamp(parseInt(e.target.value||0,10), 64, 4096); syncCanvasSize(); });
-    $("#detail").addEventListener("input", e => { state.detail = parseInt(e.target.value,10); $("#detailNum").value = state.detail; updateParams(); });
-    $("#detailNum").addEventListener("input", e => { state.detail = clamp(parseInt(e.target.value,10)||1,1,10); $("#detail").value = state.detail; updateParams(); });
-    $("#prompt").addEventListener("input", e => { state.prompt = e.target.value; updateParams(); });
-
-    $("#randomizeSeed").addEventListener("click", () => {
-      const s = (Math.random()*0xFFFFFFFF)>>>0;
-      $("#seed").value = s;
-      state.seed = s;
-      updateParams();
-    });
-
-    $$(".btn[data-palette]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const name = btn.getAttribute("data-palette");
-        state.paletteName = name;
-        state.palette = PALETTES[name].slice();
-        renderPalettePreview();
-        updateParams();
-      });
-    });
-
-    $("#shufflePalette").addEventListener("click", ()=>{
-      const r = seededRNG(currentSeed());
-      state.palette = seededShuffle(state.palette, r);
-      renderPalettePreview();
-      updateParams();
-    });
-
-    $("#generate").addEventListener("click", ()=> generate());
-    $("#download").addEventListener("click", ()=> downloadPNG());
-    $("#addToGallery").addEventListener("click", ()=> addToGallery());
-
-    document.addEventListener("keydown", (e)=>{
-      if (e.target.matches("input, textarea")) return;
-      if (e.key.toLowerCase() === "g"){ e.preventDefault(); generate(); }
-      if (e.key.toLowerCase() === "s"){ e.preventDefault(); downloadPNG(); }
-      if (e.key.toLowerCase() === "r"){ e.preventDefault(); $("#randomizeSeed").click(); }
-    });
-
-    $$(".tab").forEach(t=>{
-      t.addEventListener("click", ()=>{
-        $$(".tab").forEach(x=>x.classList.remove("active"));
-        t.classList.add("active");
-        const tab = t.getAttribute("data-tab");
-        switchTab(tab);
-      });
-    });
-
-    function switchTab(tab){
-      if (tab === "gallery"){
-        showGalleryView();
-      } else if (tab === "about"){
-        showAbout();
-      } else {
-        showEditor();
-      }
-    }
-
-    function showEditor(){
-      $("#status").textContent = "Editor ready";
-    }
-
-    function showGalleryView(){
-      $("#status").textContent = "Gallery view";
-    }
-
-    function showAbout(){
-      $("#status").textContent = "About: references and design goals below.";
-    }
-
-    // Canvas and generation
-    function syncCanvasSize(){
-      canvas.width = state.width;
-      canvas.height = state.height;
-      updateParams();
-    }
-
-    function currentSeed(){
-      let s = parseInt($("#seed").value,10);
-      if (!Number.isFinite(s)){
-        const base = `${state.prompt}|${state.style}|${state.palette.join(",")}|${state.detail}`;
-        s = hashString(base);
-      }
-      state.seed = s >>> 0;
-      return state.seed;
-    }
-
-    function seededRNG(seed){
-      return mulberry32(seed >>> 0);
-    }
-
-    function generate(){
-      const t0 = performance.now();
-      setStatus("Generating...");
-      const seed = currentSeed();
-      const rand = seededRNG(seed);
-      state.rand = rand;
-
-      // dynamic palette influenced by prompt mixed with chosen palette
-      const promptPal = promptToPalette(state.prompt||" ", rand);
-      const basePal = state.paletteName ? PALETTES[state.paletteName] : state.palette;
-      const mix = [];
-      for(let i=0;i<6;i++){
-        const a = tinycolor(basePal[i % basePal.length] || choice(basePal,rand));
-        const b = tinycolor(promptPal[i % promptPal.length] || choice(promptPal,rand));
-        const m = tinycolor.mix(a, b, 40).toHexString();
-        mix.push(m);
-      }
-      state.palette = seededShuffle(mix, rand);
-
-      syncCanvasSize();
-      // clear
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0,0,canvas.width, canvas.height);
-
-      // choose generator
-      const gen = Generators[state.style] || Generators.nebula;
-      gen(ctx, canvas.width, canvas.height, rand, state.detail, state.palette);
-
-      renderPalettePreview();
-      updateParams();
-
-      const t1 = performance.now();
-      setStatus(`Done in ${(t1-t0).toFixed(0)} ms  •  seed ${seed}`);
-    }
-
-    function setStatus(msg){ $("#status").textContent = msg; }
-
-    function renderPalettePreview(){
-      const wrap = $("#palettePreview");
-      wrap.innerHTML = "";
-      state.palette.forEach(c=>{
-        const sw = document.createElement("div");
-        sw.className = "pill";
-        const s = document.createElement("span");
-        s.className = "swatch";
-        s.style.background = c;
-        const txt = document.createElement("span");
-        txt.textContent = c;
-        sw.appendChild(s); sw.appendChild(txt);
-        wrap.appendChild(sw);
-      });
-    }
-
-    function updateParams(){
-      $("#params").textContent = JSON.stringify({
-        style: state.style,
-        prompt: state.prompt,
-        seed: state.seed ?? "(auto)",
-        size: [state.width, state.height],
-        detail: state.detail,
-        paletteName: state.paletteName,
-        palette: state.palette
-      }, null, 2);
-    }
-
-    function downloadPNG(){
-      const url = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      const safePrompt = (state.prompt||"art").slice(0,40).replace(/[^a-z0-9\-_]+/gi,"_");
-      a.download = `procedural_${state.style}_${safePrompt}_${currentSeed()}.png`;
-      a.href = url;
-      a.click();
-      setStatus("Downloaded PNG");
-    }
-
-    // Gallery with localStorage
-    function addToGallery(){
-      const entry = {
-        id: `${Date.now()}_${currentSeed()}`,
-        style: state.style,
-        prompt: state.prompt,
-        seed: state.seed,
-        detail: state.detail,
-        palette: state.palette,
-        width: state.width,
-        height: state.height,
-        image: canvas.toDataURL("image/png")
-      };
-      const list = loadGallery();
-      list.unshift(entry);
-      saveGallery(list);
-      renderMiniGallery();
-      setStatus("Added to gallery");
-    }
-
-    function loadGallery(){
-      try {
-        const raw = localStorage.getItem("proc_gallery_v1");
-        if (!raw) return [];
-        const list = JSON.parse(raw);
-        return Array.isArray(list) ? list : [];
-      } catch(e){
-        console.warn(e);
-        return [];
-      }
-    }
-    function saveGallery(list){
-      localStorage.setItem("proc_gallery_v1", JSON.stringify(list).slice(0, 5_000_000)); // keep it under quota
-    }
-
-    function renderMiniGallery(){
-      const wrap = $("#miniGallery");
-      wrap.innerHTML = "";
-      const list = loadGallery();
-      list.slice(0,24).forEach(item=>{
-        const div = document.createElement("div");
-        div.className = "thumb";
-        const img = new Image();
-        img.src = item.image;
-        img.alt = `Gallery ${item.style}`;
-        div.appendChild(img);
-        const meta = document.createElement("div");
-        meta.className = "meta";
-        meta.textContent = `${item.style} · ${item.seed}`;
-        div.appendChild(meta);
-        div.title = `Click to load\n${item.prompt || ""}`;
-        div.addEventListener("click", ()=>{
-          // load parameters back and re-render based on stored seed and style
-          $("#style").value = item.style; state.style = item.style;
-          $("#prompt").value = item.prompt || ""; state.prompt = item.prompt || "";
-          $("#seed").value = item.seed; state.seed = item.seed;
-          $("#detail").value = item.detail; $("#detailNum").value = item.detail; state.detail = item.detail;
-          $("#width").value = item.width; $("#height").value = item.height; state.width = item.width; state.height = item.height;
-          state.palette = item.palette; renderPalettePreview(); updateParams();
-          generate();
-          switchTab("editor");
-          $$(".tab").forEach(t=> t.classList.toggle("active", t.getAttribute("data-tab")==="editor"));
-        });
-        wrap.appendChild(div);
-      });
-    }
-
-    // Downloadable file generation (client-side)
-    const FILES = {
-      "index.html": () => {
-        // Serialize current document as-is for a clean single-file export.
-        // We prefer the original HTML without injected runtime state (like canvas pixels).
-        const doctype = "<!DOCTYPE html>\n";
-        const html = document.documentElement.cloneNode(true);
-
-        // Remove runtime-generated gallery thumbs to keep export lean
-        const mini = html.querySelector("#miniGallery");
-        if (mini) mini.innerHTML = "";
-
-        // Reset status text
-        const status = html.querySelector("#status");
-        if (status) status.textContent = "Ready";
-
-        // Stringify
-        const serialized = doctype + html.outerHTML;
-        return serialized;
-      },
-
-      "README.md": () => {
-        return [
-"# Procedural Image Lab",
-"",
-"Self-contained, offline procedural art generator. No servers, no external assets.",
-"",
-"## Run locally",
-"Open index.html in any modern browser. No build step required.",
-"",
-"## Deploy on GitHub Pages",
-"1. Create a repo and commit index.html (and optional files in this folder).",
-"2. In Settings → Pages: Source = Deploy from a branch, Branch = main, Folder = / (root).",
-"3. Wait 1–2 minutes. Your site will be available at:",
-"`https://<username>.github.io/<repo>/`",
-"",
-"## Keyboard shortcuts",
-"- G: Generate",
-"- S: Download",
-"- R: Random seed",
-"",
-"## Notes",
-"- Uses ES modules via import maps for tinycolor2 and lodash-es.",
-"- Gallery stores PNG thumbnails in localStorage; quotas vary by browser.",
-"",
-"## License",
-"MIT (see LICENSE)."
-        ].join("\\n");
-      },
-
-      ".nojekyll": () => {
-        return ""; // empty file is enough
-      },
-
-      ".github/workflows/pages.yml": () => {
-        return [
-"name: Deploy to GitHub Pages",
-"on:",
-"  push:",
-"    branches: [ main ]",
-"permissions:",
-"  contents: read",
-"  pages: write",
-"  id-token: write",
-"jobs:",
-"  deploy:",
-"    environment:",
-"      name: github-pages",
-"      url: ${{ steps.deployment.outputs.page_url }}",
-"    runs-on: ubuntu-latest",
-"    steps:",
-"      - name: Checkout",
-"        uses: actions/checkout@v4",
-"      - name: Setup Pages",
-"        uses: actions/configure-pages@v5",
-"      - name: Upload artifact",
-"        uses: actions/upload-pages-artifact@v3",
-"        with:",
-"          path: '.'",
-"      - name: Deploy to GitHub Pages",
-"        id: deployment",
-"        uses: actions/deploy-pages@v4"
-        ].join("\\n");
-      },
-
-      "LICENSE": () => {
-        const year = new Date().getFullYear();
-        return [
-"MIT License",
-"",
-`Copyright (c) ${year} Your Name`,
-"",
-"Permission is hereby granted, free of charge, to any person obtaining a copy",
-"of this software and associated documentation files (the \"Software\"), to deal",
-"in the Software without restriction, including without limitation the rights",
-"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
-"copies of the Software, and to permit persons to whom the Software is",
-"furnished to do so, subject to the following conditions:",
-"",
-"The above copyright notice and this permission notice shall be included in all",
-"copies or substantial portions of the Software.",
-"",
-"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR",
-"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
-"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
-"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
-"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
-"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
-"SOFTWARE."
-        ].join("\\n");
-      }
-    };
-
-    function downloadTextFile(name, text){
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      a.click();
-      setTimeout(()=> URL.revokeObjectURL(url), 1000);
-    }
-
-    // Wire download buttons
-    document.querySelectorAll(".dlbtn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const path = btn.getAttribute("data-download");
-        const maker = FILES[path];
-        if (!maker){
-          alert("Unknown file: " + path);
-          return;
-        }
-        const content = maker();
-        downloadTextFile(path, content);
-      });
-    });
-
-    // Initial setup
-    function init(){
-      // initial seed
-      const s = (Math.random()*0xFFFFFFFF)>>>0;
-      $("#seed").placeholder = "auto";
-      $("#seed").value = s;
-      const defaultPrompt = "dreamy neon mountains with stars";
-      $("#prompt").value = defaultPrompt;
-
-      state.seed = s;
-      state.prompt = defaultPrompt;
-
-      renderPalettePreview();
-      updateParams();
-      renderMiniGallery();
-      generate();
-    }
-    init();
-
-    // Note on references:
-    // This UI borrows UX ideas common in community apps:
-    // - Prompt, seed, detail sliders, image gallery/history, and download features showcased in React image generators.
-    // - Streamlit-based generative tools structure with parameter panels and galleries.
   </script>
 </body>
-        </html>
+</html>
