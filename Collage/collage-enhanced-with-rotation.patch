@@ -1,0 +1,115 @@
+--- a/collage.js
++++ b/collage.js
+@@ -63,7 +63,10 @@ function makeStrips(R, photoQueue, p, W, H, maxElemArea) {
+   while (strips.length < count && tries < count*40) {
+     tries++;
+     const angle = sampleAngle(R, p.strips.angleMin);
+     const thickness = (p.strips.thicknessPct/100) * Math.min(W, H);
+-    const opacity = clamp((p.strips.opacityPct/100), 0.76, 1.0);
++    // transparency variety for strips
++    const __baseStripAlpha = clamp((p.strips.opacityPct/100), 0.6, 1.0);
++    const opacity = clamp(__baseStripAlpha + R.range(-0.25, 0.15), 0.08, 1.0);
+     const photo = photoQueue.next();
+@@ -103,12 +106,12 @@ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+   while (tiles.length < target && tries < target*250) {
+     tries++;
+     // Area via truncated normal
+     const meanPct = p.tiles.sizeMeanPct/100;
+-    const spreadPct = p.tiles.sizeSpreadPct/100;
++    const spreadPct = (p.tiles.sizeSpreadPct/100) * 1.8; // amplify spread
+     let areaFrac = truncatedNormal(R, meanPct, spreadPct, 0.001, p.maxElementPct/100);
+     const areaPx = areaFrac * (W*H);
+     if (areaPx > maxElemArea) continue;
+@@ -125,11 +128,11 @@ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+     const cx = R.range(bw/2, W - bw/2);
+     const cy = R.range(bh/2, H - bh/2);
+-    let angle = (R.range(-1, 1) * (p.tiles.rotRangeDeg * Math.PI/180));
++    let angle = (R.range(-1, 1) * (p.tiles.rotRangeDeg * 1.5 * Math.PI/180)); // amplify rotation
+     if (R() < 0.18) angle = snapish(angle, Math.PI/2, 12 * Math.PI/180);
+-    const skew = R.range(-1, 1) * (p.tiles.skewRangeDeg * Math.PI/180);
++    const skew = R.range(-1, 1) * (p.tiles.skewRangeDeg * 1.6 * Math.PI/180); // amplify skew
+     const flipX = R() < 0.5, flipY = R() < 0.25;
+@@ -137,9 +140,9 @@ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+     if (type === 'rect') {
+       poly = makeRectPoly(bw, bh);
+     } else if (type === 'scissor') {
+-      poly = makeScissorPoly(bw, bh, p.tiles.scissorJag, R, N);
++      poly = makeScissorPoly(bw, bh, p.tiles.scissorJag * 1.6, R, N); // clearer edge
+     } else {
+-      poly = makeTornPoly(bw, bh, p.tiles.tornRough, R, N);
++      poly = makeTornPoly(bw, bh, p.tiles.tornRough * 1.8, R, N); // clearer edge
+     }
+@@ -150,7 +153,7 @@ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+     const currentCoverage = (drawnArea + a) / (W*H);
+-    if (currentCoverage > (1 - negTarget) && R() < 0.6) continue;
++    if (currentCoverage > (1 - negTarget) && R() < 0.85) continue; // stronger effect
+@@ -160,9 +163,12 @@ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+     const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.15 });
+     const tile = {
+       kind: 'tile',
+-      type, poly, angle, skew, opacity: 1.0,
++      type, poly, angle, skew,
++      // varied transparency
++      opacity: clamp(0.85 + R.range(-0.45, 0.15), 0.08, 1.0),
+       src: src, blend: 'source-over'
+     };
+     tiles.push(tile);
+     if (type !== 'rect') specialMade++;
+@@ -179,7 +185,7 @@ function chooseShapeType(R, p, wantSpecial) {
+ function makeClusters(R, photoQueue, p, W, H, maxElemArea, N) {
+   const count = clampInt(p.clusters.count, 0, 20);
+-  const per = clampInt(p.clusters.tilesPer, 1, 50);
++  const __perEff = clampInt(Math.round(p.clusters.tilesPer * 0.6), 1, 50); // fewer per cluster
+   const opacity = clamp(p.clusters.opacityPct/100, 0.76, 1.0);
+@@ -190,7 +196,7 @@ function makeClusters(R, photoQueue, p, W, H, maxElemArea, N) {
+     const radius = Math.min(W,H) * 0.18 * (0.8 + R()*0.4);
+     const tiles = [];
+-    for (let i=0; i<per; i++) {
++    for (let i=0; i<__perEff; i++) {
+@@ -202,6 +208,10 @@ function makeClusters(R, photoQueue, p, W, H, maxElemArea, N) {
+       let bw = Math.sqrt(areaPx * aspect);
+       let bh = areaPx / bw;
++      // downscale cluster pieces locally
++      const __localScale = R.range(0.6, 0.9);
++      bw *= __localScale;
++      bh *= __localScale;
+-      let poly = shapeType==='rect'?makeRectPoly(bw,bh):shapeType==='scissor'?makeScissorPoly(bw,bh,55,R,N):makeTornPoly(bw,bh,60,R,N);
++      let poly = shapeType==='rect'?makeRectPoly(bw,bh):shapeType==='scissor'?makeScissorPoly(bw,bh,55*1.6,R,N):makeTornPoly(bw,bh,60*1.8,R,N);
+@@ -213,7 +223,7 @@ function makeClusters(R, photoQueue, p, W, H, maxElemArea, N) {
+       const scale = clamp(truncatedNormal(R, 1.0, 0.35, 0.35, 2.0), 0.35, 2.0);
+       const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.12 });
+-      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk, opacity, src, blend:'source-over' });
++      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk, opacity: clamp(opacity + R.range(-0.25, 0.15), 0.06, 0.95), src, blend:'source-over' });
+@@ -238,6 +248,34 @@ function drawTile(ctx, t) {
+   ctx.clip();
+   const b = polygonBBox(t.poly);
+-  drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src);
++
++  // Draw image with true rotation
++  const centerX = b.x + b.w / 2;
++  const centerY = b.y + b.h / 2;
++  ctx.save();
++  ctx.translate(centerX, centerY);
++  ctx.rotate(t.angle || 0); // use tile angle if available
++  ctx.translate(-centerX, -centerY);
++  drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src);
++  ctx.restore();
++
++  // Emphasize edges for special shapes with a subtle stroke
++  if (t.type !== 'rect') {
++    ctx.save();
++    ctx.beginPath();
++    ctx.moveTo(t.poly[0].x, t.poly[0].y);
++    for (let i=1;i<t.poly.length;i++) ctx.lineTo(t.poly[i].x, t.poly[i].y);
++    ctx.closePath();
++    ctx.lineWidth = Math.max(1, Math.min(b.w, b.h) * 0.006);
++    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
++    ctx.stroke();
++    ctx.globalCompositeOperation = 'overlay';
++    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
++    ctx.stroke();
++    ctx.globalCompositeOperation = 'source-over';
++    ctx.restore();
++  }
+   ctx.restore();
+ }
