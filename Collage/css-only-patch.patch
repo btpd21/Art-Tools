@@ -1,0 +1,68 @@
+diff --git a/app.css b/app.css
+--- a/app.css
++++ b/app.css
+@@ -1,10 +1,65 @@
+- css
+-/* Design tokens */
++:root {
++  --bg: #0b1220;
++  --bg-elev: #11192c;
++  --bg-elev-2: #16213d;
++  --text: #e8ecf8;
++  --text-muted: #a8b0c6;
++  --primary: #5aa7ff;
++  --primary-700: #2f82f5;
++  --accent: #8bd47c;
++  --danger: #ff6b6b;
++  --divider: #24314f;
++  --border: #1c2846;
++
++  --radius: 10px;
++  --radius-sm: 8px;
++  --radius-lg: 14px;
++
++  --space-1: 4px;
++  --space-2: 8px;
++  --space-3: 12px;
++  --space-4: 16px;
++  --space-5: 20px;
++  --space-6: 24px;
++
++  --shadow-1: 0 1px 0 rgba(0,0,0,0.25);
++  --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
++  --shadow-inset: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
++
++  color-scheme: dark light;
++}
++
++/* Paired number/range UI for advanced sliders */
++.paired-number {
++  display: grid;
++  grid-template-columns: 1fr 60px 1fr 60px;
++  gap: 8px;
++  align-items: center;
++}
++
++.paired-number label {
++  font-size: 13px;
++  color: var(--text-muted);
++  margin-right: 0;
++}
++
++.paired-number input[type="range"] {
++  grid-column: span 1;
++  min-width: 60px;
++}
++
++.paired-number input[type="number"] {
++  width: 56px;
++}
++
+ html, body {
+   box-sizing: border-box;
+   margin: 0;
+   padding: 0;
+   font-family: system-ui, sans-serif;
+   background: var(--bg);
+   color: var(--text);
+ }
