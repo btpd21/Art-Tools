@@ -12,7 +12,7 @@ diff --git a/index.html b/index.html
    <meta name="viewport" content="width=device-width, initial-scale=1" />
    <meta name="color-scheme" content="light dark" />
    <link rel="stylesheet" href="app.css" />
-@@ -12,7 +12,7 @@
+@@ -12,7 +12,176 @@
    <a class="skip" href="#main">Skip to canvas</a>
  
 -  <header class="ribbon" id="ribbon" role="banner" data-mode="show" data-locked="false">
