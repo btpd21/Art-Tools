@@ -1,13 +1,14 @@
+diff --git a/Collage/app.js b/Collage/app.js
 --- a/Collage/app.js
 +++ b/Collage/app.js
-@@ -1,6 +1,191 @@
+@@ -1,6 +1,183 @@
  // UI wiring, ribbon modes, image loading, render/export, and batch.
  // Requires collage.js for generateCollage().
  
 +/* ==== Enhanced controls: dual inputs + sensitivity curves for ALL sliders ==== */
- const $ = (id) => document.getElementById(id);
- const q = (sel, el = document) => el.querySelector(sel);
- const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
++const $ = (id) => document.getElementById(id);
++const q = (sel, el = document) => el.querySelector(sel);
++const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
 +
 +// Control map: every slider in index.html with generous numeric ranges and tuned curves
 +// Curve helpers boost mid-range sensitivity; numbers can push beyond slider bounds.
@@ -154,17 +155,50 @@
 +  clearTimeout(__renderTimer);
 +  __renderTimer = setTimeout(() => run(false), ms);
 +}
-@@ -338,3 +523,11 @@ function sanitizeFilename(name) {
+@@ -96,6 +273,8 @@ function bindUI() {
+   $('file').addEventListener('change', onFiles);
+   qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
+ 
++  // Build enhanced slider+number controls for all mapped sliders
++  enhanceSliders();
+@@ -338,3 +511,12 @@ function sanitizeFilename(name) {
    return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
  }
 +
 +/* CSS hint:
 +   .paired-number { width: 84px; }
 +*/
-+
---- a/Collage/collage.js
-+++ b/Collage/collage.js
-@@ -317,7 +317,38 @@ function drawTile(ctx, t) {
+diff --git a/Collage/app.css b/Collage/app.css
+--- a/Collage/app.css
++++ b/Collage/app.css
+@@ ... @@
++/* Optional for enhanced number input */
++.paired-number { width: 84px; }
+diff --git a/Collage/collage.js b/Collage/collage.js
+@@ ... @@
++// ------ Matrix helpers for image-space transforms ------
++function matIdentity(){ return [1,0,0,1,0,0]; }
++function matMultiply(a,b){
++  return [
++    a[0]*b[0] + a[2]*b[1],
++    a[1]*b[0] + a[3]*b[1],
++    a[0]*b[2] + a[2]*b[3],
++    a[1]*b[2] + a[3]*b[3],
++    a[0]*b[4] + a[2]*b[5] + a[4],
++    a[1]*b[4] + a[3]*b[5] + a[5]
++  ];
++}
++function matTranslate(tx,ty){ return [1,0,0,1,tx,ty]; }
++function matRotate(rad){
++  const s = Math.sin(rad), c = Math.cos(rad);
++  return [c, s, -s, c, 0, 0];
++}
++function matSkew(skewX, skewY){
++  return [1, Math.tan(skewY||0), Math.tan(skewX||0), 1, 0, 0];
++}
++function matScale(sx,sy){ return [sx,0,0,sy,0,0]; }
+@@ ... @@
+-function drawTile(ctx, t) {
 -  ctx.save();
 -  ctx.globalCompositeOperation = t.blend;
 -  ctx.globalAlpha = t.opacity;
@@ -173,28 +207,66 @@
 -  const b = polygonBBox(t.poly);
 -  drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src);
 -  ctx.restore();
+-}
++function drawTile(ctx, t) {
 +  ctx.save();
 +  ctx.globalCompositeOperation = t.blend;
 +  ctx.globalAlpha = t.opacity;
++  // 1) Clip to the destination polygon
 +  pathPoly(ctx, t.poly);
 +  ctx.clip();
++  // 2) Draw the image with transform (rotation/skew/flip)
 +  const b = polygonBBox(t.poly);
-+
-+  // ---- True image rotation enhancement ----
-+  // Center context at bbox, rotate, then draw image
-+  ctx.save();
-+  ctx.translate(b.x + b.w/2, b.y + b.h/2);
-+  ctx.rotate(t.angle || 0); // assumes t.angle is in radians
-+  ctx.translate(-b.w/2, -b.h/2);
-+  drawImageCover(ctx, t.src.img, 0, 0, b.w, b.h, t.src);
++  const cx = b.x + b.w/2, cy = b.y + b.h/2;
++  const skewX = t.skew || 0;
++  const skewY = (t.skewY != null) ? t.skewY : (Math.sign(skewX) * Math.abs(skewX) * 0.35);
++  let M = matIdentity();
++  M = matMultiply(M, matTranslate(cx, cy));
++  M = matMultiply(M, matRotate(t.angle || 0));
++  M = matMultiply(M, matSkew(skewX, skewY));
++  if (t.flipX || t.flipY) {
++    const sx = t.flipX ? -1 : 1, sy = t.flipY ? -1 : 1;
++    M = matMultiply(M, matScale(sx, sy));
++  }
++  M = matMultiply(M, matTranslate(-cx, -cy));
++  ctx.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
++  // Expand draw rect for coverage after transform
++  const pad = Math.max(12, Math.min(b.w, b.h) * 0.08);
++  const dx = b.x - pad, dy = b.y - pad, dw = b.w + pad*2, dh = b.h + pad*2;
++  drawImageCover(ctx, t.src.img, dx, dy, dw, dh, t.src);
++  // Reset transform for strokes
++  ctx.setTransform(1,0,0,1,0,0);
++  // Emphasize edges for special shapes
++  if (t.type !== 'rect') {
++    ctx.save();
++    ctx.beginPath();
++    ctx.moveTo(t.poly[0].x, t.poly[0].y);
++    for (let i=1;i<t.poly.length;i++) ctx.lineTo(t.poly[i].x, t.poly[i].y);
++    ctx.closePath();
++    ctx.lineWidth = Math.max(1, Math.min(b.w, b.h) * 0.006);
++    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
++    ctx.stroke();
++    ctx.globalCompositeOperation = 'overlay';
++    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
++    ctx.stroke();
++    ctx.globalCompositeOperation = 'source-over';
++    ctx.restore();
++  }
 +  ctx.restore();
-+  ctx.restore();
---- a/Collage/app.css
-+++ b/Collage/app.css
-@@ -1,6 +1,10 @@
- /* Base styles */
-+
-+.paired-number {
-+  width: 84px;
 +}
-+
+@@ ... @@
+-    const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.15 });
++    // Slightly larger overscan because image will be transformed in image space
++    const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.28 });
+@@ ... @@
+-      opacity: clamp(0.85 + R.range(-0.45, 0.15), 0.08, 1.0),
++      opacity: clamp(0.85 + R.range(-0.45, 0.15), 0.08, 1.0),
++      // flips help make pieces feel physically reoriented
++      flipX, flipY,
+@@ ... @@
+-      const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.12 });
++      const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.25 });
+@@ ... @@
+-      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk, opacity: __clAlpha, src, blend:'source-over' });
++      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk,
++        opacity: __clAlpha, src, blend:'source-over', flipX:fx, flipY:fy });
