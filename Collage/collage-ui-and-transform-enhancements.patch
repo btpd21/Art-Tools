@@ -1,308 +1,280 @@
 diff --git a/index.html b/index.html
 --- a/index.html
 +++ b/index.html
-@@ -1,7 +1,21 @@
+@@ -1,12 +1,63 @@
  <!DOCTYPE html>
  <html lang="en">
  <head>
--  <meta charset="utf-8" />
--  <title>Botanical Collage Layer Generator</title>
-+  <meta charset="utf-8" />
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+-  <title>Botanical Collage</title>
+-  <link rel="stylesheet" href="/app.css" />
+-  <link rel="manifest" href="/manifest.webmanifest" />
 +  <title>Collage Tool</title>
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <meta name="color-scheme" content="light dark" />
-   <link rel="stylesheet" href="app.css" />
-+  <link rel="manifest" href="manifest.webmanifest" />
-+</head>
-+<body>
-+  <a class="skip" href="#main">Skip to canvas</a>
-+
-+  <header class="ribbon" id="ribbon" role="banner" data-mode="show" data-locked="false">
++  <link rel="stylesheet" href="/app.css" />
++  <link rel="manifest" href="/manifest.webmanifest" />
+ </head>
+ <body>
+   <a class="skip" href="#canvasRegion">Skip to canvas</a>
+ 
+-  <header class="ribbon" id="ribbon" role="banner">
+-    <div class="ribbon-row">
+-      <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
+-        <button class="btn primary" id="btnGenerate" title="Generate (G)">Generate</button>
+-        <button class="btn" id="btnShuffle" title="Shuffle (S)">Shuffle</button>
+-        <button class="btn" id="btnExport" title="Export PNG (E)">Export</button>
+-      </div>
+-      <div class="ribbon-right">
+-        <span id="status" class="status"></span>
+-        <button class="btn" id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">
+-          ☰
+-        </button>
+-        <div class="menu" id="ribbonMenu" role="menu">
+-          <button role="menuitemradio" data-mode="show" aria-checked="true">Show ribbon</button>
+-          <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide ribbon</button>
+-          <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact ribbon</button>
+-          <hr>
+-          <label class="toggle"><input type="checkbox" id="toggleContrast" /> High contrast</label>
+-          <label class="toggle"><input type="checkbox" id="toggleMotion" /> Reduce motion</label>
+-          <hr>
+-          <button id="lockToggle" aria-checked="false">Lock ribbon</button>
+-        </div>
+-        <span class="lock-badge" id="ribbonLockBadge">Locked</span>
+-      </div>
+-    </div>
+-  </header>
++  <header class="ribbon" id="ribbon" role="banner">
 +    <div class="ribbon-row">
 +      <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
-+        <button class="btn primary" data-action="generate" title="Generate (G)">Generate</button>
-+        <button class="btn" data-action="shuffle" title="Shuffle (S)">Shuffle</button>
-+        <button class="btn" data-action="export" title="Export PNG (E)">Export</button>
-+        <button class="btn" data-action="exportJSON" title="Export JSON">Export JSON</button>
-+        <button class="btn" data-action="batch" title="Batch x10 (B)">Batch x10</button>
-+        <div class="divider" aria-hidden="true"></div>
-+        <div class="status" id="status" role="status" aria-live="polite">idle</div>
++        <button class="btn primary" id="btnGenerate" data-action="generate" title="Generate (G)">Generate</button>
++        <button class="btn" id="btnShuffle" data-action="shuffle" title="Shuffle (S)">Shuffle</button>
++        <button class="btn" id="btnExport" data-action="export" title="Export PNG (E)">Export</button>
++        <button class="btn" id="btnExportJSON" data-action="exportJSON" title="Export JSON">Export JSON</button>
++        <button class="btn" id="btnBatch" data-action="batch" title="Batch Export (B)">Batch</button>
 +      </div>
 +      <div class="ribbon-right">
-+        <span class="badge lock-badge" id="ribbonLockBadge" aria-hidden="true">Locked</span>
-+        <div class="dropdown">
-+          <button id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="ribbonMenu">Ribbon ▾</button>
-+          <div id="ribbonMenu" class="menu" role="menu" aria-labelledby="ribbonMenuBtn">
-+            <button role="menuitemradio" data-mode="show" aria-checked="true">Show</button>
-+            <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide</button>
-+            <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact</button>
-+            <hr />
-+            <button role="menuitemcheckbox" id="lockToggle" aria-checked="false">Lock ribbon</button>
-+            <hr />
-+            <button id="toggleContrast" role="menuitemcheckbox" aria-checked="false">High contrast</button>
-+            <button id="toggleMotion" role="menuitemcheckbox" aria-checked="false">Reduced motion</button>
-+          </div>
++        <span id="status" class="status"></span>
++        <button class="btn" id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">☰</button>
++        <div class="menu" id="ribbonMenu" role="menu">
++          <button role="menuitemradio" data-mode="show" aria-checked="true">Show ribbon</button>
++          <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide ribbon</button>
++          <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact ribbon</button>
++          <hr>
++          <label class="toggle" for="toggleContrast"><input type="checkbox" id="toggleContrast" /> High contrast</label>
++          <label class="toggle" for="toggleMotion"><input type="checkbox" id="toggleMotion" /> Reduce motion</label>
++          <hr>
++          <button id="lockToggle" aria-checked="false">Lock ribbon</button>
 +        </div>
++        <span class="lock-badge" id="ribbonLockBadge">Locked</span>
 +      </div>
 +    </div>
 +  </header>
-@@ -12 +26 @@
--  <main id="main">
-+  <main id="main">
-     <nav class="sidebar" aria-label="Parameters">
-       <h2 class="title">Settings</h2>
-       <fieldset class="group">
-         <legend>Photos</legend>
-         <input id="file" type="file" accept="image/*" multiple />
-         <p class="hint">Drop or choose images. Processing stays on your device.</p>
-         <div class="images" id="images"></div>
-       </fieldset>
-@@ -208,7 +222,11 @@
--  <script src="app.js"></script>
--  <script src="collage.js"></script>
--  <script>
--    // Register service worker if present
--    if ('serviceWorker' in navigator) {
--      navigator.serviceWorker.register('sw.js').catch(()=>{});
--    }
--  </script>
--</body>
--</html>
-+  <script src="app.js"></script>
-+  <script src="collage.js"></script>
++
++  <main class="wrap">
++    <aside class="sidebar">
++      <h1 class="title">Collage Tool</h1>
++      <div class="group">
++        <label>Photos: <input type="file" id="file" multiple accept="image/*"></label>
++        <div class="images" id="images"></div>
++      </div>
++      <fieldset class="group">
++        <legend>Canvas</legend>
++        <div class="param paired-number">
++          <label for="w">Width</label>
++          <input id="w" type="number" min="64" max="4000" step="16" value="1200">
++          <label for="h">Height</label>
++          <input id="h" type="number" min="64" max="4000" step="16" value="900">
++        </div>
++        <div class="param">
++          <label for="seed">Seed</label>
++          <input id="seed" type="number" min="0" max="999999999" placeholder="random" />
++        </div>
++        <div class="param">
++          <label for="dpiLabel">DPI Label</label>
++          <input id="dpiLabel" type="text" maxlength="16" placeholder="e.g. hi-res" />
++        </div>
++      </fieldset>
++      <fieldset class="group">
++        <legend>Tiles</legend>
++        <div class="param paired-number">
++          <label for="tileCount">Count</label>
++          <input id="tileCount" type="range" min="4" max="180" step="1" value="25" />
++          <input id="tileCountNum" type="number" min="4" max="180" step="1" value="25" />
++        </div>
++        <div class="param paired-number">
++          <label for="sizeMean">Mean Size</label>
++          <input id="sizeMean" type="range" min="0.2" max="2.0" step="0.01" value="0.34" />
++          <input id="sizeMeanNum" type="number" min="0.2" max="2.0" step="0.01" value="0.34" />
++        </div>
++        <div class="param paired-number">
++          <label for="sizeSpread">Size Spread</label>
++          <input id="sizeSpread" type="range" min="0" max="1.2" step="0.01" value="0.30" />
++          <input id="sizeSpreadNum" type="number" min="0" max="1.2" step="0.01" value="0.30" />
++        </div>
++        <div class="param paired-number">
++          <label for="specialPct">% Special</label>
++          <input id="specialPct" type="range" min="0" max="100" step="1" value="32" />
++          <input id="specialPctNum" type="number" min="0" max="100" step="1" value="32" />
++        </div>
++        <div class="param paired-number">
++          <label for="rotRange">Rotation</label>
++          <input id="rotRange" type="range" min="0" max="80" step="1" value="36" />
++          <input id="rotRangeNum" type="number" min="0" max="80" step="1" value="36" />
++        </div>
++        <div class="param paired-number">
++          <label for="skewRange">Skew</label>
++          <input id="skewRange" type="range" min="0" max="50" step="1" value="7" />
++          <input id="skewRangeNum" type="number" min="0" max="50" step="1" value="7" />
++        </div>
++        <div class="param">
++          <label><input type="checkbox" id="allowRect" checked /> Rect</label>
++          <label><input type="checkbox" id="allowScissor" checked /> Scissor</label>
++          <label><input type="checkbox" id="allowTorn" checked /> Torn</label>
++        </div>
++        <div class="param paired-number">
++          <label for="scissorJag">Scissor Jag</label>
++          <input id="scissorJag" type="range" min="1" max="120" step="1" value="24" />
++          <input id="scissorJagNum" type="number" min="1" max="120" step="1" value="24" />
++        </div>
++        <div class="param paired-number">
++          <label for="tornRough">Torn Rough</label>
++          <input id="tornRough" type="range" min="1" max="100" step="1" value="45" />
++          <input id="tornRoughNum" type="number" min="1" max="100" step="1" value="45" />
++        </div>
++      </fieldset>
++      <fieldset class="group">
++        <legend>Strips</legend>
++        <div class="param paired-number">
++          <label for="stripCount">Count</label>
++          <input id="stripCount" type="range" min="0" max="15" step="1" value="2" />
++          <input id="stripCountNum" type="number" min="0" max="15" step="1" value="2" />
++        </div>
++        <div class="param paired-number">
++          <label for="stripThick">Thickness</label>
++          <input id="stripThick" type="range" min="0.05" max="0.4" step="0.01" value="0.15" />
++          <input id="stripThickNum" type="number" min="0.05" max="0.4" step="0.01" value="0.15" />
++        </div>
++        <div class="param paired-number">
++          <label for="stripOpacity">Opacity</label>
++          <input id="stripOpacity" type="range" min="60" max="100" step="1" value="86" />
++          <input id="stripOpacityNum" type="number" min="60" max="100" step="1" value="86" />
++        </div>
++        <div class="param paired-number">
++          <label for="angleMin">Min Angle</label>
++          <input id="angleMin" type="range" min="0" max="45" step="1" value="8" />
++          <input id="angleMinNum" type="number" min="0" max="45" step="1" value="8" />
++        </div>
++      </fieldset>
++      <fieldset class="group">
++        <legend>Clusters</legend>
++        <div class="param paired-number">
++          <label for="clusterCount">Count</label>
++          <input id="clusterCount" type="range" min="0" max="6" step="1" value="1" />
++          <input id="clusterCountNum" type="number" min="0" max="6" step="1" value="1" />
++        </div>
++        <div class="param paired-number">
++          <label for="clusterTiles">Tiles/Cluster</label>
++          <input id="clusterTiles" type="range" min="1" max="14" step="1" value="4" />
++          <input id="clusterTilesNum" type="number" min="1" max="14" step="1" value="4" />
++        </div>
++        <div class="param paired-number">
++          <label for="clusterOpacity">Opacity</label>
++          <input id="clusterOpacity" type="range" min="76" max="100" step="1" value="89" />
++          <input id="clusterOpacityNum" type="number" min="76" max="100" step="1" value="89" />
++        </div>
++      </fieldset>
++      <fieldset class="group">
++        <legend>Easter Eggs</legend>
++        <div class="param paired-number">
++          <label for="eggCount">Count</label>
++          <input id="eggCount" type="range" min="0" max="4" step="1" value="0" />
++          <input id="eggCountNum" type="number" min="0" max="4" step="1" value="0" />
++        </div>
++        <div class="param paired-number">
++          <label for="eggSize">Max Size (%)</label>
++          <input id="eggSize" type="range" min="2" max="24" step="1" value="9" />
++          <input id="eggSizeNum" type="number" min="2" max="24" step="1" value="9" />
++        </div>
++      </fieldset>
++    </aside>
++    <section class="stage">
++      <div class="canvas-bar">
++        <span id="meta">No render yet.</span>
++        <div class="canvas-actions">
++          <button class="btn small" data-action="fit" title="Fit Canvas">Fit</button>
++          <button class="btn small" data-action="1x" title="1x Zoom">1x</button>
++        </div>
++      </div>
++      <div class="canvas-wrap" id="canvasRegion">
++        <canvas id="c" width="1200" height="900" tabindex="0" aria-label="Collage canvas"></canvas>
++      </div>
++      <div class="canvas-footer">
++        <span class="kbdhint">Shortcuts: G = Generate, S = Shuffle, E = Export, B = Batch</span>
++      </div>
++    </section>
++  </main>
++  <script src="/collage.js"></script>
++  <script src="/app.js"></script>
 +  <script>
-+    // Register service worker if present
 +    if ('serviceWorker' in navigator) {
-+      navigator.serviceWorker.register('sw.js').catch(()=>{});
++      navigator.serviceWorker.register('/sw.js');
 +    }
 +  </script>
 +</body>
 +</html>
-
-diff --git a/app.js b/app.js
---- a/app.js
-+++ b/app.js
-@@ -1,6 +1,185 @@
- // UI wiring, ribbon modes, image loading, render/export, and batch.
- // Requires collage.js for generateCollage().
-+/* ==== Enhanced controls: dual inputs + sensitivity curves for ALL sliders ==== */
-+
-+const $ = (id) => document.getElementById(id);
-+const q = (sel, el = document) => el.querySelector(sel);
-+const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
-+
-+// Control map: every slider in index.html with generous numeric ranges and tuned curves
-+// Curve helpers boost mid-range sensitivity; numbers can push beyond slider bounds.
-+const CONTROL_MAP = {
-+  // Negative space & limits
-+  negSpace:   { numMin: 0,   numMax: 95,  curve: v => curveExpo(v, 10, 70, 0.62) },
-+  maxElem:    { numMin: 1,   numMax: 60,  curve: v => curveExpo(v, 5, 30, 0.55) },
-+
-+  // Tiles
-+  tileCount:  { numMin: 10,  numMax: 240, curve: v => curveExpo(v, 42, 96, 0.48), integer: true },
-+  specialPct: { numMin: 0,   numMax: 100, curve: v => curveExpo(v, 10, 60, 0.55) },
-+  sizeMean:   { numMin: 0.5, numMax: 20,  curve: v => curveExpo(v, 1, 6, 0.55) },
-+  sizeSpread: { numMin: 0.5, numMax: 30,  curve: v => curveExpo(v, 1, 8, 0.50) },
-+  rotRange:   { numMin: 0,   numMax: 180, curve: v => curveExpo(v, 5, 75, 0.40) },
-+  skewRange:  { numMin: 0,   numMax: 80,  curve: v => curveExpo(v, 0, 20, 0.42) },
-+  scissorJag: { numMin: 0,   numMax: 200, curve: v => curveExpo(v, 0, 100, 0.60) },
-+  tornRough:  { numMin: 0,   numMax: 200, curve: v => curveExpo(v, 0, 100, 0.60) },
-+
-+  // Strips
-+  stripCount:   { numMin: 0,  numMax: 60,  curve: v => curveExpo(v, 0, 20, 0.52), integer: true },
-+  stripThick:   { numMin: 0.2,numMax: 40,  curve: v => curveExpo(v, 1, 15, 0.50) },
-+  stripOpacity: { numMin: 10, numMax: 100, curve: v => curveExpo(v, 76, 100, 0.70) },
-+  angleMin:     { numMin: 0,  numMax: 60,  curve: v => curveExpo(v, 10, 30, 0.55) },
-+
-+  // Clusters
-+  clusterCount:   { numMin: 0,  numMax: 20, curve: v => curveExpo(v, 0, 9, 0.55), integer: true },
-+  clusterTiles:   { numMin: 1,  numMax: 40, curve: v => curveExpo(v, 5, 17, 0.55), integer: true },
-+  clusterOpacity: { numMin: 10, numMax: 100,curve: v => curveExpo(v, 76, 100, 0.70) },
-+
-+  // Easter eggs
-+  eggCount: { numMin: 0,   numMax: 30, curve: v => curveExpo(v, 0, 7, 0.55), integer: true },
-+  eggSize:  { numMin: 0.05,numMax: 10, curve: v => curveExpo(v, 0.2, 3, 0.48), stepHint: 0.1 },
-+};
-+
-+// Exponential-ish curve that boosts low/mid sensitivity.
-+// Input v in [a,b]; k in (0,1). Smaller k = stronger boost.
-+function curveExpo(v, a, b, k) {
-+  const t = (v - a) / (b - a);
-+  const t2 = Math.pow(Math.max(0, Math.min(1, t)), k);
-+  return a + t2 * (b - a);
-+}
-+
-+// Adds number inputs next to sliders, stronger curves, and Shift-drag fine control.
-+function enhanceSliders() {
-+  Object.keys(CONTROL_MAP).forEach(id => {
-+    const slider = $(id);
-+    if (!slider || slider.tagName !== 'INPUT' || slider.type !== 'range') return;
-+    if (slider.__enhanced) return;
-+
-+    const cfg = CONTROL_MAP[id];
-+    const wrapper = slider.closest('.param') || slider.parentElement;
-+
-+    // Create number input
-+    const num = document.createElement('input');
-+    num.type = 'number';
-+    num.className = 'paired-number';
-+    num.style.marginLeft = '8px';
-+    num.style.width = '84px';
-+    const sliderStep = slider.step && slider.step !== '' ? parseFloat(slider.step) : 1;
-+    const numStep = cfg.stepHint || sliderStep || 1;
-+    num.step = String(numStep);
-+
-+    // Allow numbers to exceed slider bounds
-+    const sMin = slider.min !== '' ? +slider.min : 0;
-+    const sMax = slider.max !== '' ? +slider.max : 100;
-+    num.min = (cfg.numMin != null ? cfg.numMin : sMin).toString();
-+    num.max = (cfg.numMax != null ? cfg.numMax : Math.max(sMax, sMin)).toString();
-+    num.value = slider.value;
-+
-+    wrapper.appendChild(num);
-+
-+    const format = (x) => {
-+      if (cfg.integer) return String(Math.round(x));
-+      const stepStr = String(num.step);
-+      const dp = stepStr.includes('.') ? (stepStr.split('.')[1].length) : 0;
-+      return String(Number(x).toFixed(dp));
-+    };
-+
-+    const syncFromSlider = (trigger=true) => {
-+      const raw = +slider.value;
-+      const curved = cfg.curve ? cfg.curve(raw) : raw;
-+      num.value = format(curved);
-+      if (trigger) requestRenderSoon();
-+    };
-+    const syncFromNumber = (trigger=true) => {
-+      let v = +num.value;
-+      if (cfg.integer) v = Math.round(v);
-+      // Keep the slider within its visual span so UI feels stable
-+      if (v < +slider.min) slider.value = String(slider.min);
-+      else if (v > +slider.max) slider.value = String(slider.max);
-+      else slider.value = String(v);
-+      if (trigger) requestRenderSoon();
-+    };
-+
-+    // Default change
-+    slider.addEventListener('input', () => syncFromSlider(true));
-+    // Shift-drag for fine control
-+    slider.addEventListener('pointerdown', (e) => {
-+      if (!e.isPrimary) return;
-+      const baseStep = sliderStep || 1;
-+      const fineStep = baseStep * 0.1;
-+      let lastX = e.clientX;
-+      let val = +slider.value;
-+      const onMove = (ev) => {
-+        const dx = ev.clientX - lastX;
-+        lastX = ev.clientX;
-+        const useFine = ev.shiftKey;
-+        const delta = (dx / 4) * (useFine ? fineStep : baseStep);
-+        val = clamp(val + delta, +slider.min, +slider.max);
-+        if (cfg.integer) val = Math.round(val);
-+        slider.value = String(val);
-+        syncFromSlider(true);
-+      };
-+      const off = () => {
-+        window.removeEventListener('pointermove', onMove);
-+        window.removeEventListener('pointerup', off);
-+      };
-+      window.addEventListener('pointermove', onMove);
-+      window.addEventListener('pointerup', off);
-+    });
-+
-+    num.addEventListener('change', () => syncFromNumber(true));
-+    num.addEventListener('input', () => {/* avoid render spam while typing */});
-+
-+    // Initialize number view
-+    syncFromSlider(false);
-+
-+    slider.__enhanced = { num, cfg, syncFromSlider, syncFromNumber };
-+  });
-+}
-+
-+// Compute effective param from enhanced controls (prefers curved numeric)
-+function readEnhanced(id, fallback) {
-+  const el = $(id);
-+  if (!el) return fallback;
-+  const enh = el.__enhanced;
-+  if (!enh) return +el.value;
-+  return +enh.num.value;
-+}
-+
-+// Debounced render requests to keep UI smooth during scrubbing/typing
-+let __renderTimer = null;
-+function requestRenderSoon(ms = 60) {
-+  clearTimeout(__renderTimer);
-+  __renderTimer = setTimeout(() => run(false), ms);
-+}
+diff --git a/app.css b/app.css
+--- a/app.css
++++ b/app.css
+@@ -1,10 +1,43 @@
+ css
+ /* Design tokens */
+ :root {
+   --bg: #0b1220;
+   --bg-elev: #11192c;
+   --bg-elev-2: #16213d;
+   --text: #e8ecf8;
+   --text-muted: #a8b0c6;
+   --primary: #5aa7ff;
+   --primary-700: #2f82f5;
+   --accent: #8bd47c;
+   --danger: #ff6b6b;
+   --divider: #24314f;
+   --border: #1c2846;
  
- const canvas = $('c');
- const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+   --radius: 10px;
+   --radius-sm: 8px;
+   --radius-lg: 14px;
  
- let photos = [];
- let rngSeed = null;
- let viewScale = 1;
+   --space-1: 4px;
+   --space-2: 8px;
+   --space-3: 12px;
+   --space-4: 16px;
+   --space-5: 20px;
+   --space-6: 24px;
  
- // Ribbon state
- const RIBBON_MODE_KEY = 'ribbon:mode';
- const RIBBON_LOCK_KEY = 'ribbon:locked';
- const PREF_CONTRAST_KEY = 'pref:high-contrast';
- const PREF_MOTION_KEY = 'pref:reduced-motion';
- const PREF_KEY = 'collage:prefs';
-@@ -96,6 +275,8 @@
-   $('file').addEventListener('change', onFiles);
-   qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
-+  // Build enhanced slider+number controls for all mapped sliders
-+  enhanceSliders();
-   // Keyboard shortcuts
-   window.addEventListener('keydown', (e) => {
-     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-     if (e.key.toLowerCase() === 'g') { run(false); }
-     if (e.key.toLowerCase() === 's') { run(true); }
-     if (e.key.toLowerCase() === 'e') { exportPNG(); }
-     if (e.key.toLowerCase() === 'b') { batchExport(10); }
-   });
-@@ -168,6 +349,7 @@
-   if (a === 'batch') batchExport(10);
+   --shadow-1: 0 1px 0 rgba(0,0,0,0.25);
+   --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
+   --shadow-inset: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
+ 
+   color-scheme: dark light;
  }
-+// requestRenderSoon defined above
-@@ -179,35 +361,35 @@
-   const W = +$('w').value, H = +$('h').value;
-   const seedIn = $('seed').value ? +$('seed').value : null;
-   if (shuffleSeed || seedIn === null) rngSeed = Math.floor(Math.random() * 1e9);
-   else rngSeed = seedIn;
-   return {
-     width: W, height: H, seed: rngSeed,
-     dpiLabel: $('dpiLabel').value || '',
--    negativeSpacePct: +$('negSpace').value,
--    maxElementPct: +$('maxElem').value,
-+    negativeSpacePct: readEnhanced('negSpace'),
-+    maxElementPct: readEnhanced('maxElem'),
-     tiles: {
--      count: +$('tileCount').value,
--      specialPct: +$('specialPct').value,
--      sizeMeanPct: +$('sizeMean').value,
--      sizeSpreadPct: +$('sizeSpread').value,
--      rotRangeDeg: +$('rotRange').value,
--      skewRangeDeg: +$('skewRange').value,
-+      count: readEnhanced('tileCount'),
-+      specialPct: readEnhanced('specialPct'),
-+      sizeMeanPct: readEnhanced('sizeMean'),
-+      sizeSpreadPct: readEnhanced('sizeSpread'),
-+      rotRangeDeg: readEnhanced('rotRange'),
-+      skewRangeDeg: readEnhanced('skewRange'),
-       allow: {
-         rect: $('allowRect').checked,
-         scissor: $('allowScissor').checked,
-         torn: $('allowTorn').checked,
-       },
--      scissorJag: +$('scissorJag').value,
--      tornRough: +$('tornRough').value,
-+      scissorJag: readEnhanced('scissorJag'),
-+      tornRough: readEnhanced('tornRough'),
-     },
-     strips: {
--      count: +$('stripCount').value,
--      thicknessPct: +$('stripThick').value,
--      opacityPct: +$('stripOpacity
++
++/* Paired number/range UI for advanced sliders */
++.paired-number {
++  display: grid;
++  grid-template-columns: 1fr 60px 1fr 60px;
++  gap: 8px;
++  align-items: center;
++}
++.paired-number label {
++  font-size: 13px;
++  color: var(--text-muted);
++  margin-right: 0;
++}
++.paired-number input[type="range"] {
++  grid-column: span 1;
++  min-width: 60px;
++}
++.paired-number input[type="number"] {
++  width: 56px;
++
