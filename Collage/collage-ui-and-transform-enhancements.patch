@@ -222,12 +222,12 @@ diff --git a/index.html b/index.html
 +  </script>
 +</body>
 +</html>
+
 diff --git a/app.css b/app.css
 --- a/app.css
 +++ b/app.css
 @@ -1,10 +1,64 @@
--css
- /* Design tokens */
++/* Design tokens */
  :root {
    --bg: #0b1220;
    --bg-elev: #11192c;
@@ -258,31 +258,41 @@ diff --git a/app.css b/app.css
  
    color-scheme: dark light;
  }
-+
-+/* Paired number/range UI for advanced sliders */
-+.paired-number {
-+  display: grid;
-+  grid-template-columns: 1fr 60px 1fr 60px;
-+  gap: 8px;
-+  align-items: center;
-+}
-+.paired-number label {
-+  font-size: 13px;
-+  color: var(--text-muted);
-+  margin-right: 0;
-+}
-+.paired-number input[type="range"] {
-+  grid-column: span 1;
-+  min-width: 60px;
-+}
-+.paired-number input[type="number"] {
-+  width: 56px;
-+}
  
--{
-+* {
-   box-sizing: border-box;
+ /* Paired number/range UI for advanced sliders */
+ .paired-number {
+   display: grid;
+   grid-template-columns: 1fr 60px 1fr 60px;
+   gap: 8px;
+   align-items: center;
+ }
+ .paired-number label {
+   font-size: 13px;
+   color: var(--text-muted);
+   margin-right: 0;
+ }
+ .paired-number input[type="range"] {
+   grid-column: span 1;
+   min-width: 60px;
+ }
+ .paired-number input[type="number"] {
+   width: 56px;
+ }
+
+ * {
+    box-sizing: border-box;
  }
  html, body {
-@@ -192,6 +246,15 @@
- /* High contrast toggle
+   height: 100%;
+   margin: 0;
+   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+   background: linear-gradient(180deg, var(--bg) 0%, #0a1020 100%);
+   color: var(--text);
+ }
+ 
+ .group {
+   margin: 0 0 var(--space-4) 0;
+   padding: var(--space-3);
+   border: 1px solid var(--border);
+   background: rgba(255,255,255,0.02);
+   border
