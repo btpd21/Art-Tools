@@ -323,4 +323,3 @@ input[type="file"] {
   .wrap { grid-template-columns: 1fr; }
   .sidebar { border-right: 0; border-bottom: 1px solid var(--border); }
 }
-Say “Next” for File 3/6: app.js.
