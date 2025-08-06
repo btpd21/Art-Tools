@@ -1,0 +1,248 @@
+--- a/Collage/app.js
++++ b/Collage/app.js
+@@ -1,6 +1,7 @@
+ // UI wiring, ribbon modes, image loading, render/export, and batch.
+ // Requires collage.js for generateCollage().
+ 
++/* ==== Enhanced controls: dual inputs + sensitivity curves for ALL sliders ==== */
+ const $ = (id) => document.getElementById(id);
+ const q = (sel, el = document) => el.querySelector(sel);
+ const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+@@ -23,6 +24,183 @@ let viewScale = 1;
+ const RIBBON_MODE_KEY = 'ribbon:mode';
+ const RIBBON_LOCK_KEY = 'ribbon:locked';
+ const PREF_CONTRAST_KEY = 'pref:high-contrast';
+ const PREF_MOTION_KEY = 'pref:reduced-motion';
+ const PREF_KEY = 'collage:prefs';
+ 
++// Control map: every slider in index.html with generous numeric ranges and tuned curves
++// Curve helpers boost mid-range sensitivity; numbers can push beyond slider bounds.
++const CONTROL_MAP = {
++  // Negative space & limits
++  negSpace:   { numMin: 0,   numMax: 95,  curve: v => curveExpo(v, 10, 70, 0.62) },
++  maxElem:    { numMin: 1,   numMax: 60,  curve: v => curveExpo(v, 5, 30, 0.55) },
++
++  // Tiles
++  tileCount:  { numMin: 10,  numMax: 240, curve: v => curveExpo(v, 42, 96, 0.48), integer: true },
++  specialPct: { numMin: 0,   numMax: 100, curve: v => curveExpo(v, 10, 60, 0.55) },
++  sizeMean:   { numMin: 0.5, numMax: 20,  curve: v => curveExpo(v, 1, 6, 0.55) },
++  sizeSpread: { numMin: 0.5, numMax: 30,  curve: v => curveExpo(v, 1, 8, 0.50) },
++  rotRange:   { numMin: 0,   numMax: 180, curve: v => curveExpo(v, 5, 75, 0.40) },
++  skewRange:  { numMin: 0,   numMax: 80,  curve: v => curveExpo(v, 0, 20, 0.42) },
++  scissorJag: { numMin: 0,   numMax: 200, curve: v => curveExpo(v, 0, 100, 0.60) },
++  tornRough:  { numMin: 0,   numMax: 200, curve: v => curveExpo(v, 0, 100, 0.60) },
++
++  // Strips
++  stripCount:   { numMin: 0,  numMax: 60,  curve: v => curveExpo(v, 0, 20, 0.52), integer: true },
++  stripThick:   { numMin: 0.2,numMax: 40,  curve: v => curveExpo(v, 1, 15, 0.50) },
++  stripOpacity: { numMin: 10, numMax: 100, curve: v => curveExpo(v, 76, 100, 0.70) },
++  angleMin:     { numMin: 0,  numMax: 60,  curve: v => curveExpo(v, 10, 30, 0.55) },
++
++  // Clusters
++  clusterCount:   { numMin: 0,  numMax: 20, curve: v => curveExpo(v, 0, 9, 0.55), integer: true },
++  clusterTiles:   { numMin: 1,  numMax: 40, curve: v => curveExpo(v, 5, 17, 0.55), integer: true },
++  clusterOpacity: { numMin: 10, numMax: 100,curve: v => curveExpo(v, 76, 100, 0.70) },
++
++  // Easter eggs
++  eggCount: { numMin: 0,   numMax: 30, curve: v => curveExpo(v, 0, 7, 0.55), integer: true },
++  eggSize:  { numMin: 0.05,numMax: 10, curve: v => curveExpo(v, 0.2, 3, 0.48), stepHint: 0.1 },
++};
++
++// Exponential-ish curve that boosts low/mid sensitivity.
++// Input v in [a,b]; k in (0,1). Smaller k = stronger boost.
++function curveExpo(v, a, b, k) {
++  const t = (v - a) / (b - a);
++  const t2 = Math.pow(Math.max(0, Math.min(1, t)), k);
++  return a + t2 * (b - a);
++}
++
++// Adds number inputs next to sliders, stronger curves, and Shift-drag fine control.
++function enhanceSliders() {
++  Object.keys(CONTROL_MAP).forEach(id => {
++    const slider = $(id);
++    if (!slider || slider.tagName !== 'INPUT' || slider.type !== 'range') return;
++    if (slider.__enhanced) return;
++
++    const cfg = CONTROL_MAP[id];
++    const wrapper = slider.closest('.param') || slider.parentElement;
++
++    // Create number input
++    const num = document.createElement('input');
++    num.type = 'number';
++    num.className = 'paired-number';
++    num.style.marginLeft = '8px';
++    num.style.width = '84px';
++    const sliderStep = slider.step && slider.step !== '' ? parseFloat(slider.step) : 1;
++    const numStep = cfg.stepHint || sliderStep || 1;
++    num.step = String(numStep);
++
++    // Allow numbers to exceed slider bounds
++    const sMin = slider.min !== '' ? +slider.min : 0;
++    const sMax = slider.max !== '' ? +slider.max : 100;
++    num.min = (cfg.numMin != null ? cfg.numMin : sMin).toString();
++    num.max = (cfg.numMax != null ? cfg.numMax : Math.max(sMax, sMin)).toString();
++    num.value = slider.value;
++
++    wrapper.appendChild(num);
++
++    const format = (x) => {
++      if (cfg.integer) return String(Math.round(x));
++      const stepStr = String(num.step);
++      const dp = stepStr.includes('.') ? (stepStr.split('.')[1].length) : 0;
++      return String(Number(x).toFixed(dp));
++    };
++
++    const syncFromSlider = (trigger=true) => {
++      const raw = +slider.value;
++      const curved = cfg.curve ? cfg.curve(raw) : raw;
++      num.value = format(curved);
++      if (trigger) requestRenderSoon();
++    };
++    const syncFromNumber = (trigger=true) => {
++      let v = +num.value;
++      if (cfg.integer) v = Math.round(v);
++      // Keep the slider within its visual span so UI feels stable
++      if (v < +slider.min) slider.value = String(slider.min);
++      else if (v > +slider.max) slider.value = String(slider.max);
++      else slider.value = String(v);
++      if (trigger) requestRenderSoon();
++    };
++
++    // Default change
++    slider.addEventListener('input', () => syncFromSlider(true));
++    // Shift-drag for fine control
++    slider.addEventListener('pointerdown', (e) => {
++      if (!e.isPrimary) return;
++      const baseStep = sliderStep || 1;
++      const fineStep = baseStep * 0.1;
++      let lastX = e.clientX;
++      let val = +slider.value;
++      const onMove = (ev) => {
++        const dx = ev.clientX - lastX;
++        lastX = ev.clientX;
++        const useFine = ev.shiftKey;
++        const delta = (dx / 4) * (useFine ? fineStep : baseStep);
++        val = clamp(val + delta, +slider.min, +slider.max);
++        if (cfg.integer) val = Math.round(val);
++        slider.value = String(val);
++        syncFromSlider(true);
++      };
++      const off = () => {
++        window.removeEventListener('pointermove', onMove);
++        window.removeEventListener('pointerup', off);
++      };
++      window.addEventListener('pointermove', onMove);
++      window.addEventListener('pointerup', off);
++    });
++
++    num.addEventListener('change', () => syncFromNumber(true));
++    num.addEventListener('input', () => {/* avoid render spam while typing */});
++
++    // Initialize number view
++    syncFromSlider(false);
++
++    slider.__enhanced = { num, cfg, syncFromSlider, syncFromNumber };
++  });
++}
++
++// Compute effective param from enhanced controls (prefers curved numeric)
++function readEnhanced(id, fallback) {
++  const el = $(id);
++  if (!el) return fallback;
++  const enh = el.__enhanced;
++  if (!enh) return +el.value;
++  return +enh.num.value;
++}
++
++// Debounced render requests to keep UI smooth during scrubbing/typing
++let __renderTimer = null;
++function requestRenderSoon(ms = 60) {
++  clearTimeout(__renderTimer);
++  __renderTimer = setTimeout(() => run(false), ms);
++}
++
+ function getCurrentPrefs() {
+   return {
+     width: +document.querySelector('#width').value || undefined,
+@@ -96,6 +266,8 @@ function bindUI() {
+   $('file').addEventListener('change', onFiles);
+   qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
+ 
++  // Build enhanced slider+number controls for all mapped sliders
++  enhanceSliders();
+   // Keyboard shortcuts
+   window.addEventListener('keydown', (e) => {
+     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+@@ -179,35 +352,35 @@ function gatherParams(shuffleSeed) {
+     width: W, height: H, seed: rngSeed,
+     dpiLabel: $('dpiLabel').value || '',
+-    negativeSpacePct: +$('negSpace').value,
+-    maxElementPct: +$('maxElem').value,
++    negativeSpacePct: readEnhanced('negSpace'),
++    maxElementPct: readEnhanced('maxElem'),
+     tiles: {
+-      count: +$('tileCount').value,
+-      specialPct: +$('specialPct').value,
+-      sizeMeanPct: +$('sizeMean').value,
+-      sizeSpreadPct: +$('sizeSpread').value,
+-      rotRangeDeg: +$('rotRange').value,
+-      skewRangeDeg: +$('skewRange').value,
++      count: readEnhanced('tileCount'),
++      specialPct: readEnhanced('specialPct'),
++      sizeMeanPct: readEnhanced('sizeMean'),
++      sizeSpreadPct: readEnhanced('sizeSpread'),
++      rotRangeDeg: readEnhanced('rotRange'),
++      skewRangeDeg: readEnhanced('skewRange'),
+       allow: {
+         rect: $('allowRect').checked,
+         scissor: $('allowScissor').checked,
+         torn: $('allowTorn').checked,
+       },
+-      scissorJag: +$('scissorJag').value,
+-      tornRough: +$('tornRough').value,
++      scissorJag: readEnhanced('scissorJag'),
++      tornRough: readEnhanced('tornRough'),
+     },
+     strips: {
+-      count: +$('stripCount').value,
+-      thicknessPct: +$('stripThick').value,
+-      opacityPct: +$('stripOpacity').value,
+-      angleMin: +$('angleMin').value,
++      count: readEnhanced('stripCount'),
++      thicknessPct: readEnhanced('stripThick'),
++      opacityPct: readEnhanced('stripOpacity'),
++      angleMin: readEnhanced('angleMin'),
+     },
+     clusters: {
+-      count: +$('clusterCount').value,
+-      tilesPer: +$('clusterTiles').value,
+-      opacityPct: +$('clusterOpacity').value,
++      count: readEnhanced('clusterCount'),
++      tilesPer: readEnhanced('clusterTiles'),
++      opacityPct: readEnhanced('clusterOpacity'),
+     },
+     eggs: {
+-      count: +$('eggCount').value,
+-      maxSizePct: +$('eggSize').value,
++      count: readEnhanced('eggCount'),
++      maxSizePct: readEnhanced('eggSize'),
+     }
+   };
+ }
+@@ -338,3 +511,9 @@ function sanitizeFilename(name) {
+   return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
+ }
++
++/* CSS hint:
++   .paired-number { width: 84px; }
++*/
++
++
+--- a/Collage/app.css
++++ b/Collage/app.css
+@@ -1,3 +1,8 @@
++/* Style for paired number input next to sliders */
++.paired-number {
++  width: 84px;
++  margin-left: 8px;
++}
