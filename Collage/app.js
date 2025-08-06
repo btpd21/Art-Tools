@@ -17,6 +17,32 @@ const RIBBON_MODE_KEY = 'ribbon:mode';
 const RIBBON_LOCK_KEY = 'ribbon:locked';
 const PREF_CONTRAST_KEY = 'pref:high-contrast';
 const PREF_MOTION_KEY = 'pref:reduced-motion';
+const PREF_KEY = 'collage:prefs';
+
+function getCurrentPrefs() {
+  return {
+    width: +document.querySelector('#width').value || undefined,
+    height: +document.querySelector('#height').value || undefined,
+    gap: +document.querySelector('#gap').value || undefined,
+  };
+}
+
+function applyPrefs(p) {
+  if (!p) return;
+  if (p.width) document.querySelector('#width').value = p.width;
+  if (p.height) document.querySelector('#height').value = p.height;
+  if (p.gap != null) document.querySelector('#gap').value = p.gap;
+}
+
+function savePrefs() {
+  try { localStorage.setItem(PREF_KEY, JSON.stringify(getCurrentPrefs())); }
+  catch (e) { console.warn('savePrefs failed', e); }
+}
+
+function restorePrefs() {
+  try { applyPrefs(JSON.parse(localStorage.getItem(PREF_KEY))); }
+  catch { /* ignore */ }
+}
 
 init();
 
