@@ -161,12 +161,8 @@ diff --git a/Collage/app.js b/Collage/app.js
  
 +  // Build enhanced slider+number controls for all mapped sliders
 +  enhanceSliders();
++
 
-+
-+
-+/* CSS hint:
-+   .paired-number { width: 84px; }
-+*/
 diff --git a/Collage/app.css b/Collage/app.css
 --- a/Collage/app.css
 +++ b/Collage/app.css
@@ -177,7 +173,7 @@ diff --git a/Collage/app.css b/Collage/app.css
 diff --git a/Collage/collage.js b/Collage/collage.js
 --- a/Collage/collage.js
 +++ b/Collage/collage.js
-@@ ... @@
+@@ -0,0 +1,14 @@
 +// ------ Matrix helpers for image-space transforms ------
 +function matIdentity(){ return [1,0,0,1,0,0]; }
 +function matMultiply(a,b){
@@ -190,6 +186,8 @@ diff --git a/Collage/collage.js b/Collage/collage.js
 +    a[1]*b[4] + a[3]*b[5] + a[5]
 +  ];
 +}
++
++
 +function matTranslate(tx,ty){ return [1,0,0,1,tx,ty]; }
 +function matRotate(rad){
 +  const s = Math.sin(rad), c = Math.cos(rad);
