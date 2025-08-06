@@ -226,7 +226,6 @@ diff --git a/app.css b/app.css
 --- a/app.css
 +++ b/app.css
 @@ -1,10 +1,43 @@
- css
  /* Design tokens */
  :root {
    --bg: #0b1220;
