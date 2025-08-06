@@ -1,6 +1,6 @@
 --- a/Collage/app.js
 +++ b/Collage/app.js
-@@ -1,6 +1,7 @@
+@@ -1,6 +1,191 @@
  // UI wiring, ribbon modes, image loading, render/export, and batch.
  // Requires collage.js for generateCollage().
  
@@ -8,13 +8,7 @@
  const $ = (id) => document.getElementById(id);
  const q = (sel, el = document) => el.querySelector(sel);
  const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
-@@ -23,6 +24,183 @@ let viewScale = 1;
- const RIBBON_MODE_KEY = 'ribbon:mode';
- const RIBBON_LOCK_KEY = 'ribbon:locked';
- const PREF_CONTRAST_KEY = 'pref:high-contrast';
- const PREF_MOTION_KEY = 'pref:reduced-motion';
- const PREF_KEY = 'collage:prefs';
- 
++
 +// Control map: every slider in index.html with generous numeric ranges and tuned curves
 +// Curve helpers boost mid-range sensitivity; numbers can push beyond slider bounds.
 +const CONTROL_MAP = {
@@ -160,76 +154,7 @@
 +  clearTimeout(__renderTimer);
 +  __renderTimer = setTimeout(() => run(false), ms);
 +}
-+
- function getCurrentPrefs() {
-   return {
-     width: +document.querySelector('#width').value || undefined,
-@@ -96,6 +266,8 @@ function bindUI() {
-   $('file').addEventListener('change', onFiles);
-   qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
- 
-+  // Build enhanced slider+number controls for all mapped sliders
-+  enhanceSliders();
-   // Keyboard shortcuts
-   window.addEventListener('keydown', (e) => {
-     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-@@ -179,35 +352,35 @@ function gatherParams(shuffleSeed) {
-     width: W, height: H, seed: rngSeed,
-     dpiLabel: $('dpiLabel').value || '',
--    negativeSpacePct: +$('negSpace').value,
--    maxElementPct: +$('maxElem').value,
-+    negativeSpacePct: readEnhanced('negSpace'),
-+    maxElementPct: readEnhanced('maxElem'),
-     tiles: {
--      count: +$('tileCount').value,
--      specialPct: +$('specialPct').value,
--      sizeMeanPct: +$('sizeMean').value,
--      sizeSpreadPct: +$('sizeSpread').value,
--      rotRangeDeg: +$('rotRange').value,
--      skewRangeDeg: +$('skewRange').value,
-+      count: readEnhanced('tileCount'),
-+      specialPct: readEnhanced('specialPct'),
-+      sizeMeanPct: readEnhanced('sizeMean'),
-+      sizeSpreadPct: readEnhanced('sizeSpread'),
-+      rotRangeDeg: readEnhanced('rotRange'),
-+      skewRangeDeg: readEnhanced('skewRange'),
-       allow: {
-         rect: $('allowRect').checked,
-         scissor: $('allowScissor').checked,
-         torn: $('allowTorn').checked,
-       },
--      scissorJag: +$('scissorJag').value,
--      tornRough: +$('tornRough').value,
-+      scissorJag: readEnhanced('scissorJag'),
-+      tornRough: readEnhanced('tornRough'),
-     },
-     strips: {
--      count: +$('stripCount').value,
--      thicknessPct: +$('stripThick').value,
--      opacityPct: +$('stripOpacity').value,
--      angleMin: +$('angleMin').value,
-+      count: readEnhanced('stripCount'),
-+      thicknessPct: readEnhanced('stripThick'),
-+      opacityPct: readEnhanced('stripOpacity'),
-+      angleMin: readEnhanced('angleMin'),
-     },
-     clusters: {
--      count: +$('clusterCount').value,
--      tilesPer: +$('clusterTiles').value,
--      opacityPct: +$('clusterOpacity').value,
-+      count: readEnhanced('clusterCount'),
-+      tilesPer: readEnhanced('clusterTiles'),
-+      opacityPct: readEnhanced('clusterOpacity'),
-     },
-     eggs: {
--      count: +$('eggCount').value,
--      maxSizePct: +$('eggSize').value,
-+      count: readEnhanced('eggCount'),
-+      maxSizePct: readEnhanced('eggSize'),
-     }
-   };
- }
-@@ -338,3 +511,9 @@ function sanitizeFilename(name) {
+@@ -338,3 +523,11 @@ function sanitizeFilename(name) {
    return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
  }
 +
@@ -237,12 +162,39 @@
 +   .paired-number { width: 84px; }
 +*/
 +
+--- a/Collage/collage.js
++++ b/Collage/collage.js
+@@ -317,7 +317,38 @@ function drawTile(ctx, t) {
+-  ctx.save();
+-  ctx.globalCompositeOperation = t.blend;
+-  ctx.globalAlpha = t.opacity;
+-  pathPoly(ctx, t.poly);
+-  ctx.clip();
+-  const b = polygonBBox(t.poly);
+-  drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src);
+-  ctx.restore();
++  ctx.save();
++  ctx.globalCompositeOperation = t.blend;
++  ctx.globalAlpha = t.opacity;
++  pathPoly(ctx, t.poly);
++  ctx.clip();
++  const b = polygonBBox(t.poly);
 +
++  // ---- True image rotation enhancement ----
++  // Center context at bbox, rotate, then draw image
++  ctx.save();
++  ctx.translate(b.x + b.w/2, b.y + b.h/2);
++  ctx.rotate(t.angle || 0); // assumes t.angle is in radians
++  ctx.translate(-b.w/2, -b.h/2);
++  drawImageCover(ctx, t.src.img, 0, 0, b.w, b.h, t.src);
++  ctx.restore();
++  ctx.restore();
 --- a/Collage/app.css
 +++ b/Collage/app.css
-@@ -1,3 +1,8 @@
-+/* Style for paired number input next to sliders */
+@@ -1,6 +1,10 @@
+ /* Base styles */
++
 +.paired-number {
 +  width: 84px;
-+  margin-left: 8px;
 +}
++
