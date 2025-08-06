@@ -155,16 +155,13 @@ diff --git a/Collage/app.js b/Collage/app.js
 +  clearTimeout(__renderTimer);
 +  __renderTimer = setTimeout(() => run(false), ms);
 +}
-@@ -96,7 +273,8 @@ function bindUI() {
-   $('file').addEventListener('change', onFiles);
+
 +  qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
 +  enhanceSliders();
  
 +  // Build enhanced slider+number controls for all mapped sliders
 +  enhanceSliders();
-@@ -338,3 +511,12 @@ function sanitizeFilename(name) {
-   return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
- }
+
 +
 +
 +/* CSS hint:
