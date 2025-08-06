@@ -1,7 +1,7 @@
 diff --git a/app.css b/app.css
 --- a/app.css
 +++ b/app.css
-@@ -1,10 +1,65 @@
+@@ -1,10 +1,64 @@
 - css
 -/* Design tokens */
 +:root {
@@ -35,7 +35,6 @@ diff --git a/app.css b/app.css
 +  color-scheme: dark light;
 +}
 +
-+/* Paired number/range UI for advanced sliders */
 +.paired-number {
 +  display: grid;
 +  grid-template-columns: 1fr 60px 1fr 60px;
