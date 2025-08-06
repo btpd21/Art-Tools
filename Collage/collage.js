@@ -1,4 +1,3 @@
-javascript
 // Core generator: RNG, noise, contour builders, layout logic,
 // strips, tiles, clusters, eggs. Draws to 2D canvas with alpha.
 
