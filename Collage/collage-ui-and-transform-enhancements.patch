@@ -1,14 +1,79 @@
-diff --git a/Collage/app.js b/Collage/app.js
---- a/Collage/app.js
-+++ b/Collage/app.js
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -1,7 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+-  <meta charset="utf-8" />
+-  <title>Botanical Collage Layer Generator</title>
++  <meta charset="utf-8" />
++  <title>Collage Tool</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <meta name="color-scheme" content="light dark" />
+   <link rel="stylesheet" href="app.css" />
+@@ -12,7 +12,7 @@
+   <a class="skip" href="#main">Skip to canvas</a>
+ 
+-  <header class="ribbon" id="ribbon" role="banner" data-mode="show" data-locked="false">
++  <header class="ribbon" id="ribbon" role="banner" data-mode="show" data-locked="false">
+     <div class="ribbon-row">
+       <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
+         <button class="btn primary" data-action="generate" title="Generate (G)">Generate</button>
+         <button class="btn" data-action="shuffle" title="Shuffle (S)">Shuffle</button>
+         <button class="btn" data-action="export" title="Export PNG (E)">Export</button>
+         <button class="btn" data-action="exportJSON" title="Export JSON">Export JSON</button>
+         <button class="btn" data-action="batch" title="Batch x10 (B)">Batch x10</button>
+         <div class="divider" aria-hidden="true"></div>
+         <div class="status" id="status" role="status" aria-live="polite">idle</div>
+       </div>
+       <div class="ribbon-right">
+         <span class="badge lock-badge" id="ribbonLockBadge" aria-hidden="true">Locked</span>
+         <div class="dropdown">
+           <button id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="ribbonMenu">Ribbon ▾</button>
+           <div id="ribbonMenu" class="menu" role="menu" aria-labelledby="ribbonMenuBtn">
+             <button role="menuitemradio" data-mode="show" aria-checked="true">Show</button>
+             <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide</button>
+             <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact</button>
+             <hr />
+             <button role="menuitemcheckbox" id="lockToggle" aria-checked="false">Lock ribbon</button>
+             <hr />
+             <button id="toggleContrast" role="menuitemcheckbox" aria-checked="false">High contrast</button>
+             <button id="toggleMotion" role="menuitemcheckbox" aria-checked="false">Reduced motion</button>
+           </div>
+         </div>
+       </div>
+     </div>
+   </header>
+@@ -30,7 +30,7 @@
+     <nav class="sidebar" aria-label="Parameters">
+       <h2 class="title">Settings</h2>
+ 
+       <fieldset class="group">
+         <legend>Photos</legend>
+         <input id="file" type="file" accept="image/*" multiple />
+         <p class="hint">Drop or choose images. Processing stays on your device.</p>
+         <div class="images" id="images"></div>
+       </fieldset>
+@@ -208,7 +208,7 @@
+   <script src="app.js"></script>
+   <script src="collage.js"></script>
+   <script>
+     // Register service worker if present
+     if ('serviceWorker' in navigator) {
+       navigator.serviceWorker.register('sw.js').catch(()=>{});
+     }
+   </script>
+ </body>
+ </html>
+ 
+diff --git a/app.js b/app.js
+--- a/app.js
++++ b/app.js
 @@ -1,6 +1,183 @@
  // UI wiring, ribbon modes, image loading, render/export, and batch.
  // Requires collage.js for generateCollage().
- 
 +/* ==== Enhanced controls: dual inputs + sensitivity curves for ALL sliders ==== */
-+const $ = (id) => document.getElementById(id);
-+const q = (sel, el = document) => el.querySelector(sel);
-+const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
 +
 +// Control map: every slider in index.html with generous numeric ranges and tuned curves
 +// Curve helpers boost mid-range sensitivity; numbers can push beyond slider bounds.
@@ -155,118 +220,99 @@ diff --git a/Collage/app.js b/Collage/app.js
 +  clearTimeout(__renderTimer);
 +  __renderTimer = setTimeout(() => run(false), ms);
 +}
-
-+  qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
-+  enhanceSliders();
- 
+@@ -96,6 +273,8 @@
+   $('file').addEventListener('change', onFiles);
+   qa('[data-action]').forEach(btn => btn.addEventListener('click', onAction));
 +  // Build enhanced slider+number controls for all mapped sliders
 +  enhanceSliders();
+   // Keyboard shortcuts
+   window.addEventListener('keydown', (e) => {
+     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+     if (e.key.toLowerCase() === 'g') { run(false); }
+     if (e.key.toLowerCase() === 's') { run(true); }
+     if (e.key.toLowerCase() === 'e') { exportPNG(); }
+     if (e.key.toLowerCase() === 'b') { batchExport(10); }
+   });
+@@ -168,6 +345,7 @@
+   if (a === 'batch') batchExport(10);
+ }
++// requestRenderSoon defined above
+@@ -179,35 +357,35 @@
+   const W = +$('w').value, H = +$('h').value;
+   const seedIn = $('seed').value ? +$('seed').value : null;
+   if (shuffleSeed || seedIn === null) rngSeed = Math.floor(Math.random() * 1e9);
+   else rngSeed = seedIn;
+   return {
+     width: W, height: H, seed: rngSeed,
+     dpiLabel: $('dpiLabel').value || '',
+-    negativeSpacePct: +$('negSpace').value,
+-    maxElementPct: +$('maxElem').value,
++    negativeSpacePct: readEnhanced('negSpace'),
++    maxElementPct: readEnhanced('maxElem'),
+     tiles: {
+-      count: +$('tileCount').value,
+-      specialPct: +$('specialPct').value,
+-      sizeMeanPct: +$('sizeMean').value,
+-      sizeSpreadPct: +$('sizeSpread').value,
+-      rotRangeDeg: +$('rotRange').value,
+-      skewRangeDeg: +$('skewRange').value,
++      count: readEnhanced('tileCount'),
++      specialPct: readEnhanced('specialPct'),
++      sizeMeanPct: readEnhanced('sizeMean'),
++      sizeSpreadPct: readEnhanced('sizeSpread'),
++      rotRangeDeg: readEnhanced('rotRange'),
++      skewRangeDeg: readEnhanced('skewRange'),
+       allow: {
+         rect: $('allowRect').checked,
+         scissor: $('allowScissor').checked,
+         torn: $('allowTorn').checked,
+       },
+-      scissorJag: +$('scissorJag').value,
+-      tornRough: +$('tornRough').value,
++      scissorJag: readEnhanced('scissorJag'),
++      tornRough: readEnhanced('tornRough'),
+     },
+     strips: {
+-      count: +$('stripCount').value,
+-      thicknessPct: +$('stripThick').value,
+-      opacityPct: +$('stripOpacity').value,
+-      angleMin: +$('angleMin').value,
++      count: readEnhanced('stripCount'),
++      thicknessPct: readEnhanced('stripThick'),
++      opacityPct: readEnhanced('stripOpacity'),
++      angleMin: readEnhanced('angleMin'),
+     },
+     clusters: {
+-      count: +$('clusterCount').value,
+-      tilesPer: +$('clusterTiles').value,
+-      opacityPct: +$('clusterOpacity').value,
++      count: readEnhanced('clusterCount'),
++      tilesPer: readEnhanced('clusterTiles'),
++      opacityPct: readEnhanced('clusterOpacity'),
+     },
+     eggs: {
+-      count: +$('eggCount').value,
+-      maxSizePct: +$('eggSize').value,
++      count: readEnhanced('eggCount'),
++      maxSizePct: readEnhanced('eggSize'),
+     }
+   };
+ }
+@@ -338,3 +516,7 @@
+ function sanitizeFilename(name) {
+   return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
+ }
 +
-
-diff --git a/Collage/app.css b/Collage/app.css
---- a/Collage/app.css
-+++ b/Collage/app.css
-@@ -0,0 +1,3 @@
++// -- Style for enhanced slider number input
++
++
+diff --git a/app.css b/app.css
+--- a/app.css
++++ b/app.css
+@@ -1,6 +1,12 @@
++/* Enhanced slider number input */
 +.paired-number {
 +  width: 84px;
++  margin-left: 8px;
++  font-size: 14px;
 +}
-diff --git a/Collage/collage.js b/Collage/collage.js
---- a/Collage/collage.js
-+++ b/Collage/collage.js
-@@ -0,0 +1,14 @@
-+// ------ Matrix helpers for image-space transforms ------
-+function matIdentity(){ return [1,0,0,1,0,0]; }
-+function matMultiply(a,b){
-+  return [
-+    a[0]*b[0] + a[2]*b[1],
-+    a[1]*b[0] + a[3]*b[1],
-+    a[0]*b[2] + a[2]*b[3],
-+    a[1]*b[2] + a[3]*b[3],
-+    a[0]*b[4] + a[2]*b[5] + a[4],
-+    a[1]*b[4] + a[3]*b[5] + a[5]
-+  ];
-+}
-+
-+
-+function matTranslate(tx,ty){ return [1,0,0,1,tx,ty]; }
-+function matRotate(rad){
-+  const s = Math.sin(rad), c = Math.cos(rad);
-+  return [c, s, -s, c, 0, 0];
-+}
-+function matSkew(skewX, skewY){
-+  return [1, Math.tan(skewY||0), Math.tan(skewX||0), 1, 0, 0];
-+}
-+function matScale(sx,sy){ return [sx,0,0,sy,0,0]; }
-@@ ... @@
--function drawTile(ctx, t) {
--  ctx.save();
--  ctx.globalCompositeOperation = t.blend;
--  ctx.globalAlpha = t.opacity;
--  pathPoly(ctx, t.poly);
--  ctx.clip();
--  const b = polygonBBox(t.poly);
--  drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src);
--  ctx.restore();
--}
-+function drawTile(ctx, t) {
-+  ctx.save();
-+  ctx.globalCompositeOperation = t.blend;
-+  ctx.globalAlpha = t.opacity;
-+  // 1) Clip to the destination polygon
-+  pathPoly(ctx, t.poly);
-+  ctx.clip();
-+  // 2) Draw the image with transform (rotation/skew/flip)
-+  const b = polygonBBox(t.poly);
-+  const cx = b.x + b.w/2, cy = b.y + b.h/2;
-+  const skewX = t.skew || 0;
-+  const skewY = (t.skewY != null) ? t.skewY : (Math.sign(skewX) * Math.abs(skewX) * 0.35);
-+  let M = matIdentity();
-+  M = matMultiply(M, matTranslate(cx, cy));
-+  M = matMultiply(M, matRotate(t.angle || 0));
-+  M = matMultiply(M, matSkew(skewX, skewY));
-+  if (t.flipX || t.flipY) {
-+    const sx = t.flipX ? -1 : 1, sy = t.flipY ? -1 : 1;
-+    M = matMultiply(M, matScale(sx, sy));
-+  }
-+  M = matMultiply(M, matTranslate(-cx, -cy));
-+  ctx.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
-+  // Expand draw rect for coverage after transform
-+  const pad = Math.max(12, Math.min(b.w, b.h) * 0.08);
-+  const dx = b.x - pad, dy = b.y - pad, dw = b.w + pad*2, dh = b.h + pad*2;
-+  drawImageCover(ctx, t.src.img, dx, dy, dw, dh, t.src);
-+  // Reset transform for strokes
-+  ctx.setTransform(1,0,0,1,0,0);
-+  // Emphasize edges for special shapes
-+  if (t.type !== 'rect') {
-+    ctx.save();
-+    ctx.beginPath();
-+    ctx.moveTo(t.poly[0].x, t.poly[0].y);
-+    for (let i=1;i<t.poly.length;i++) ctx.lineTo(t.poly[i].x, t.poly[i].y);
-+    ctx.closePath();
-+    ctx.lineWidth = Math.max(1, Math.min(b.w, b.h) * 0.006);
-+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-+    ctx.stroke();
-+    ctx.globalCompositeOperation = 'overlay';
-+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-+    ctx.stroke();
-+    ctx.globalCompositeOperation = 'source-over';
-+    ctx.restore();
-+  }
-+  ctx.restore();
-+}
-@@ ... @@
--    const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.15 });
-+    // Slightly larger overscan because image will be transformed in image space
-+    const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.28 });
-@@ ... @@
--      opacity: clamp(0.85 + R.range(-0.45, 0.15), 0.08, 1.0),
-+      opacity: clamp(0.85 + R.range(-0.45, 0.15), 0.08, 1.0),
-+      // flips help make pieces feel physically reoriented
-+      flipX, flipY,
-@@ ... @@
--      const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.12 });
-+      const src = chooseCoverSample(img, bbox.w, bbox.h, R, { scale, overscan: 1.25 });
-@@ ... @@
--      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk, opacity: __clAlpha, src, blend:'source-over' });
-+      tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk,
-+        opacity: __clAlpha, src, blend:'source-over', flipX:fx, flipY:fy });
