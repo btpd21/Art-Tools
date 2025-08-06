@@ -51,7 +51,7 @@ diff --git a/app.css b/app.css
 +.paired-number input[type="number"] {
 +  width: 56px;
 +}
-@@ -104,5 +135,6 @@
+@@ -101,8 +132,9 @@
  .sidebar {
    border-right: 1px solid var(--border);
    padding: var(--space-4);
