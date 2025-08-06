@@ -1,8 +1,9 @@
 diff --git a/app.css b/app.css
 --- a/app.css
 +++ b/app.css
-@@ -1,34 +1,54 @@
- /* Design tokens */
+@@ -1,4 +1,35 @@
+-/* Design tokens */
++/* Design tokens + paired-number UI layout */
  :root {
    --bg: #0b1220;
    --bg-elev: #11192c;
@@ -34,7 +35,6 @@ diff --git a/app.css b/app.css
    color-scheme: dark light;
  }
 +
-+/* Paired-number layout for dual sliders */
 +.paired-number {
 +  display: grid;
 +  grid-template-columns: 1fr 60px 1fr 60px;
@@ -44,7 +44,6 @@ diff --git a/app.css b/app.css
 +.paired-number label {
 +  font-size: 13px;
 +  color: var(--text-muted);
-+  margin-right: 0;
 +}
 +.paired-number input[type="range"] {
 +  min-width: 60px;
@@ -52,7 +51,7 @@ diff --git a/app.css b/app.css
 +.paired-number input[type="number"] {
 +  width: 56px;
 +}
-@@ -135,7 +155,8 @@
+@@ -135,7 +166,8 @@
  .sidebar {
    border-right: 1px solid var(--border);
    padding: var(--space-4);
