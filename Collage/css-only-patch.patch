@@ -1,9 +1,9 @@
 diff --git a/app.css b/app.css
---- a/app.css
+new file mode 100644
+--- /dev/null
 +++ b/app.css
-@@ -1,10 +1,64 @@
-- css
--/* Design tokens */
+@@ -0,0 +1,68 @@
++/* Design tokens */
 +:root {
 +  --bg: #0b1220;
 +  --bg-elev: #11192c;
@@ -35,6 +35,7 @@ diff --git a/app.css b/app.css
 +  color-scheme: dark light;
 +}
 +
++/* Paired number/range UI for advanced sliders */
 +.paired-number {
 +  display: grid;
 +  grid-template-columns: 1fr 60px 1fr 60px;
@@ -57,12 +58,11 @@ diff --git a/app.css b/app.css
 +  width: 56px;
 +}
 +
- html, body {
-   box-sizing: border-box;
-   margin: 0;
-   padding: 0;
-   font-family: system-ui, sans-serif;
-   background: var(--bg);
-   color: var(--text);
- }
- 
++html, body {
++  box-sizing: border-box;
++  margin: 0;
++  padding: 0;
++  font-family: system-ui, sans-serif;
++  background: var(--bg);
++  color: var(--text);
++}
