@@ -1,4 +1,3 @@
-javascript
 // UI wiring, ribbon modes, image loading, render/export, and batch.
 // Requires collage.js for generateCollage().
 
