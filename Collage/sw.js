@@ -1,6 +1,6 @@
 // Minimal offline cache for app shell
 
-const CACHE = 'collage-gen-v2';
+const CACHE = 'collage-gen-v3';
 const ASSETS = [
   './',
   './index.html',
