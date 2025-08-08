@@ -1,115 +1,81 @@
 diff --git a/index.html b/index.html
 --- a/index.html
 +++ b/index.html
-@@ -1,12 +1,111 @@
+@@ -1,12 +1,12 @@
  <!DOCTYPE html>
  <html lang="en">
  <head>
    <meta charset="utf-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 -  <title>Botanical Collage</title>
--  <link rel="stylesheet" href="/app.css" />
--  <link rel="manifest" href="/manifest.webmanifest" />
 +  <title>Collage Tool</title>
-+  <link rel="stylesheet" href="/app.css" />
-+  <link rel="manifest" href="/manifest.webmanifest" />
+   <link rel="stylesheet" href="/app.css" />
+   <link rel="manifest" href="/manifest.webmanifest" />
  </head>
  <body>
    <a class="skip" href="#canvasRegion">Skip to canvas</a>
--
--  <header class="ribbon" id="ribbon" role="banner">
--    <div class="ribbon-row">
--      <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
--        <button class="btn primary" id="btnGenerate" title="Generate (G)">Generate</button>
--        <button class="btn" id="btnShuffle" title="Shuffle (S)">Shuffle</button>
--        <button class="btn" id="btnExport" title="Export PNG (E)">Export</button>
--      </div>
--      <div class="ribbon-right">
+@@ -20,7 +20,7 @@
+       </div>
+       <div class="ribbon-right">
 -        <span id="status" class="status"></span>
--        <button class="btn" id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">
--          ☰
--        </button>
--        <div class="menu" id="ribbonMenu" role="menu">
--          <button role="menuitemradio" data-mode="show" aria-checked="true">Show ribbon</button>
--          <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide ribbon</button>
--          <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact ribbon</button>
--          <hr>
--          <label class="toggle"><input type="checkbox" id="toggleContrast" /> High contrast</label>
--          <label class="toggle"><input type="checkbox" id="toggleMotion" /> Reduce motion</label>
--          <hr>
--          <button id="lockToggle" aria-checked="false">Lock ribbon</button>
++        <span id="status" class="status">idle</span>
+         <button class="btn" id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">
+           ☰
+         </button>
+@@ -61,84 +61,136 @@
+     <aside class="sidebar">
+       <h1 class="title">Collage Tool</h1>
+       <div class="group">
+         <label>Photos: <input type="file" id="file" multiple accept="image/*"></label>
+         <div class="images" id="images"></div>
+       </div>
+       <fieldset class="group">
+         <legend>Canvas</legend>
+-        <label class="param"><span>Width</span><input id="w" type="number" min="64" max="4000" step="16" value="1200" /></label>
+-        <label class="param"><span>Height</span><input id="h" type="number" min="64" max="4000" step="16" value="900" /></label>
+-        <label class="param"><span>Seed</span><input id="seed" type="number" min="0" max="999999999" placeholder="random" /></label>
+-        <label class="param"><span>DPI Label</span><input id="dpiLabel" type="text" maxlength="16" placeholder="e.g. hi-res" /></label>
++        <label class="param"><span>Width</span><input id="w" type="number" min="64" max="4000" step="16" value="1200" /></label>
++        <label class="param"><span>Height</span><input id="h" type="number" min="64" max="4000" step="16" value="900" /></label>
++        <label class="param"><span>Seed</span><input id="seed" type="number" min="0" max="999999999" placeholder="random" /></label>
++        <label class="param"><span>DPI Label</span><input id="dpiLabel" type="text" maxlength="16" placeholder="e.g. hi-res" /></label>
+       </fieldset>
+
+       <fieldset class="group">
+         <legend>Tiles</legend>
+-        <label class="param"><span>Tile Count</span><input id="tileCount" type="range" min="42" max="96" value="60" /></label>
+-        <label class="param"><span>Max Element Size</span><input id="maxElem" type="range" min="6" max="32" step="1" value="18" /></label>
+-        <label class="param"><span>Size Mean</span><input id="sizeMean" type="range" min="0.10" max="0.80" step="0.01" value="0.34" /></label>
+-        <label class="param"><span>Size Spread</span><input id="sizeSpread" type="range" min="0.00" max="0.90" step="0.01" value="0.30" /></label>
+-        <label class="param"><span>% Special</span><input id="specialPct" type="range" min="0" max="100" step="1" value="32" /></label>
+-        <label class="param"><span>Rotation Range</span><input id="rotRange" type="range" min="0" max="80" step="1" value="36" /></label>
+-        <label class="param"><span>Skew Range</span><input id="skewRange" type="range" min="0" max="50" step="1" value="7" /></label>
+-        <div class="toggle-row">
+-          <label class="toggle"><input id="allowRect" type="checkbox" checked />Rect</label>
+-          <label class="toggle"><input id="allowScissor" type="checkbox" checked />Scissor</label>
+-          <label class="toggle"><input id="allowTorn" type="checkbox" checked />Torn</label>
 -        </div>
--        <span class="lock-badge" id="ribbonLockBadge">Locked</span>
--      </div>
--    </div>
--  </header>
-+  <header class="ribbon" id="ribbon" role="banner">
-+    <div class="ribbon-row">
-+      <div class="ribbon-left" role="toolbar" aria-label="Collage actions">
-+        <button class="btn primary" id="btnGenerate" data-action="generate" title="Generate (G)">Generate</button>
-+        <button class="btn" id="btnShuffle" data-action="shuffle" title="Shuffle (S)">Shuffle</button>
-+        <button class="btn" id="btnExport" data-action="export" title="Export PNG (E)">Export</button>
-+        <button class="btn" id="btnExportJSON" data-action="exportJSON" title="Export JSON">Export JSON</button>
-+        <button class="btn" id="btnBatch" data-action="batch" title="Batch Export (B)">Batch</button>
-+      </div>
-+      <div class="ribbon-right">
-+        <span id="status" class="status"></span>
-+        <button class="btn" id="ribbonMenuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">☰</button>
-+        <div class="menu" id="ribbonMenu" role="menu">
-+          <button role="menuitemradio" data-mode="show" aria-checked="true">Show ribbon</button>
-+          <button role="menuitemradio" data-mode="auto" aria-checked="false">Auto-hide ribbon</button>
-+          <button role="menuitemradio" data-mode="compact" aria-checked="false">Compact ribbon</button>
-+          <hr>
-+          <label class="toggle" for="toggleContrast"><input type="checkbox" id="toggleContrast" /> High contrast</label>
-+          <label class="toggle" for="toggleMotion"><input type="checkbox" id="toggleMotion" /> Reduce motion</label>
-+          <hr>
-+          <button id="lockToggle" aria-checked="false">Lock ribbon</button>
-+        </div>
-+        <span class="lock-badge" id="ribbonLockBadge">Locked</span>
-+      </div>
-+    </div>
-+  </header>
-+
-+  <main class="wrap">
-+    <aside class="sidebar">
-+      <h1 class="title">Collage Tool</h1>
-+      <div class="group">
-+        <label>Photos: <input type="file" id="file" multiple accept="image/*"></label>
-+        <div class="images" id="images"></div>
-+      </div>
-+      <fieldset class="group">
-+        <legend>Canvas</legend>
+-        <label class="param"><span>Scissor Jag</span><input id="scissorJag" type="range" min="1" max="120" step="1" value="24" /></label>
+-        <label class="param"><span>Torn Rough</span><input id="tornRough" type="range" min="1" max="100" step="1" value="45" /></label>
 +        <div class="param paired-number">
-+          <label for="w">Width</label>
-+          <input id="w" type="number" min="64" max="4000" step="16" value="1200">
-+          <label for="h">Height</label>
-+          <input id="h" type="number" min="64" max="4000" step="16" value="900">
-+        </div>
-+        <div class="param">
-+          <label for="seed">Seed</label>
-+          <input id="seed" type="number" min="0" max="999999999" placeholder="random" />
-+        </div>
-+        <div class="param">
-+          <label for="dpiLabel">DPI Label</label>
-+          <input id="dpiLabel" type="text" maxlength="16" placeholder="e.g. hi-res" />
-+        </div>
-+      </fieldset>
-+      <fieldset class="group">
-+        <legend>Tiles</legend>
-+        <div class="param paired-number">
-+          <label for="tileCount">Count</label>
-+          <input id="tileCount" type="range" min="4" max="180" step="1" value="25" />
-+          <input id="tileCountNum" type="number" min="4" max="180" step="1" value="25" />
++          <label for="tileCount">Tile Count</label>
++          <input id="tileCount" type="range" min="42" max="96" step="1" value="60" />
++          <input id="tileCountNum" type="number" min="42" max="96" step="1" value="60" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="sizeMean">Mean Size</label>
-+          <input id="sizeMean" type="range" min="0.2" max="2.0" step="0.01" value="0.34" />
-+          <input id="sizeMeanNum" type="number" min="0.2" max="2.0" step="0.01" value="0.34" />
++          <label for="maxElem">Max Element Size</label>
++          <input id="maxElem" type="range" min="6" max="32" step="1" value="18" />
++          <input id="maxElemNum" type="number" min="6" max="32" step="1" value="18" />
++        </div>
++        <div class="param paired-number">
++          <label for="sizeMean">Size Mean</label>
++          <input id="sizeMean" type="range" min="0.10" max="0.80" step="0.01" value="0.34" />
++          <input id="sizeMeanNum" type="number" min="0.10" max="0.80" step="0.01" value="0.34" />
 +        </div>
 +        <div class="param paired-number">
 +          <label for="sizeSpread">Size Spread</label>
-+          <input id="sizeSpread" type="range" min="0" max="1.2" step="0.01" value="0.30" />
-+          <input id="sizeSpreadNum" type="number" min="0" max="1.2" step="0.01" value="0.30" />
++          <input id="sizeSpread" type="range" min="0.00" max="0.90" step="0.01" value="0.30" />
++          <input id="sizeSpreadNum" type="number" min="0.00" max="0.90" step="0.01" value="0.30" />
 +        </div>
 +        <div class="param paired-number">
 +          <label for="specialPct">% Special</label>
@@ -117,19 +83,28 @@ diff --git a/index.html b/index.html
 +          <input id="specialPctNum" type="number" min="0" max="100" step="1" value="32" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="rotRange">Rotation</label>
++          <label for="rotRange">Rotation Range</label>
 +          <input id="rotRange" type="range" min="0" max="80" step="1" value="36" />
 +          <input id="rotRangeNum" type="number" min="0" max="80" step="1" value="36" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="skewRange">Skew</label>
++          <label for="skewRange">Skew Range</label>
 +          <input id="skewRange" type="range" min="0" max="50" step="1" value="7" />
 +          <input id="skewRangeNum" type="number" min="0" max="50" step="1" value="7" />
 +        </div>
-+        <div class="param">
-+          <label><input type="checkbox" id="allowRect" checked /> Rect</label>
-+          <label><input type="checkbox" id="allowScissor" checked /> Scissor</label>
-+          <label><input type="checkbox" id="allowTorn" checked /> Torn</label>
++        <div class="param paired-number">
++          <label for="imgRotRange">Texture Rot °</label>
++          <input id="imgRotRange" type="range" min="0" max="180" step="1" value="0" />
++          <input id="imgRotRangeNum" type="number" min="0" max="180" step="1" value="0" />
++        </div>
++        <div class="toggle-row">
++          <label class="toggle"><input id="allowRect" type="checkbox" checked />Rect</label>
++          <label class="toggle"><input id="allowScissor" type="checkbox" checked />Scissor</label>
++          <label class="toggle"><input id="allowTorn" type="checkbox" checked />Torn</label>
++          <label class="toggle"><input id="allowEllipse" type="checkbox" />Ellipse</label>
++          <label class="toggle"><input id="allowTriangle" type="checkbox" />Triangle</label>
++          <label class="toggle"><input id="allowDiamond" type="checkbox" />Diamond</label>
++          <label class="toggle"><input id="allowHex" type="checkbox" />Hex</label>
 +        </div>
 +        <div class="param paired-number">
 +          <label for="scissorJag">Scissor Jag</label>
@@ -141,164 +116,322 @@ diff --git a/index.html b/index.html
 +          <input id="tornRough" type="range" min="1" max="100" step="1" value="45" />
 +          <input id="tornRoughNum" type="number" min="1" max="100" step="1" value="45" />
 +        </div>
-+      </fieldset>
-+      <fieldset class="group">
-+        <legend>Strips</legend>
+       </fieldset>
+
+       <fieldset class="group">
+         <legend>Strips</legend>
+-        <label class="param"><span>Strip Count</span><input id="stripCount" type="range" min="0" max="4" step="1" value="2" /></label>
+-        <label class="param"><span>Strip Thickness</span><input id="stripThick" type="range" min="0.05" max="0.40" step="0.01" value="0.15" /></label>
+-        <label class="param"><span>Strip Opacity</span><input id="stripOpacity" type="range" min="60" max="100" step="1" value="86" /></label>
+-        <label class="param"><span>Minimum Angle Deviation</span><input id="angleMin" type="range" min="0" max="45" step="1" value="8" /></label>
 +        <div class="param paired-number">
-+          <label for="stripCount">Count</label>
-+          <input id="stripCount" type="range" min="0" max="15" step="1" value="2" />
-+          <input id="stripCountNum" type="number" min="0" max="15" step="1" value="2" />
++          <label for="stripCount">Strip Count</label>
++          <input id="stripCount" type="range" min="0" max="4" step="1" value="2" />
++          <input id="stripCountNum" type="number" min="0" max="4" step="1" value="2" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="stripThick">Thickness</label>
-+          <input id="stripThick" type="range" min="0.05" max="0.4" step="0.01" value="0.15" />
-+          <input id="stripThickNum" type="number" min="0.05" max="0.4" step="0.01" value="0.15" />
++          <label for="stripThick">Strip Thickness</label>
++          <input id="stripThick" type="range" min="0.05" max="0.40" step="0.01" value="0.15" />
++          <input id="stripThickNum" type="number" min="0.05" max="0.40" step="0.01" value="0.15" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="stripOpacity">Opacity</label>
++          <label for="stripOpacity">Strip Opacity</label>
 +          <input id="stripOpacity" type="range" min="60" max="100" step="1" value="86" />
 +          <input id="stripOpacityNum" type="number" min="60" max="100" step="1" value="86" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="angleMin">Min Angle</label>
++          <label for="angleMin">Minimum Angle Deviation</label>
 +          <input id="angleMin" type="range" min="0" max="45" step="1" value="8" />
 +          <input id="angleMinNum" type="number" min="0" max="45" step="1" value="8" />
 +        </div>
-+      </fieldset>
-+      <fieldset class="group">
-+        <legend>Clusters</legend>
+       </fieldset>
+
+       <fieldset class="group">
+         <legend>Clusters</legend>
+-        <label class="param"><span>Cluster Count</span><input id="clusterCount" type="range" min="0" max="4" step="1" value="1" /></label>
+-        <label class="param"><span>Tiles/Cluster</span><input id="clusterTiles" type="range" min="1" max="12" step="1" value="4" /></label>
+-        <label class="param"><span>Cluster Opacity</span><input id="clusterOpacity" type="range" min="76" max="100" step="1" value="89" /></label>
 +        <div class="param paired-number">
-+          <label for="clusterCount">Count</label>
-+          <input id="clusterCount" type="range" min="0" max="6" step="1" value="1" />
-+          <input id="clusterCountNum" type="number" min="0" max="6" step="1" value="1" />
++          <label for="clusterCount">Cluster Count</label>
++          <input id="clusterCount" type="range" min="0" max="4" step="1" value="1" />
++          <input id="clusterCountNum" type="number" min="0" max="4" step="1" value="1" />
 +        </div>
 +        <div class="param paired-number">
 +          <label for="clusterTiles">Tiles/Cluster</label>
-+          <input id="clusterTiles" type="range" min="1" max="14" step="1" value="4" />
-+          <input id="clusterTilesNum" type="number" min="1" max="14" step="1" value="4" />
++          <input id="clusterTiles" type="range" min="1" max="12" step="1" value="4" />
++          <input id="clusterTilesNum" type="number" min="1" max="12" step="1" value="4" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="clusterOpacity">Opacity</label>
++          <label for="clusterOpacity">Cluster Opacity</label>
 +          <input id="clusterOpacity" type="range" min="76" max="100" step="1" value="89" />
 +          <input id="clusterOpacityNum" type="number" min="76" max="100" step="1" value="89" />
 +        </div>
-+      </fieldset>
-+      <fieldset class="group">
-+        <legend>Easter Eggs</legend>
+       </fieldset>
+
+       <fieldset class="group">
+         <legend>Easter Eggs</legend>
+-        <label class="param"><span>Egg Count</span><input id="eggCount" type="range" min="0" max="4" step="1" value="0" /></label>
+-        <label class="param"><span>Max Egg Size (%)</span><input id="eggSize" type="range" min="2" max="24" step="1" value="9" /></label>
 +        <div class="param paired-number">
-+          <label for="eggCount">Count</label>
++          <label for="eggCount">Egg Count</label>
 +          <input id="eggCount" type="range" min="0" max="4" step="1" value="0" />
 +          <input id="eggCountNum" type="number" min="0" max="4" step="1" value="0" />
 +        </div>
 +        <div class="param paired-number">
-+          <label for="eggSize">Max Size (%)</label>
++          <label for="eggSize">Max Egg Size (%)</label>
 +          <input id="eggSize" type="range" min="2" max="24" step="1" value="9" />
 +          <input id="eggSizeNum" type="number" min="2" max="24" step="1" value="9" />
 +        </div>
-+      </fieldset>
-+    </aside>
-+    <section class="stage">
-+      <div class="canvas-bar">
-+        <span id="meta">No render yet.</span>
-+        <div class="canvas-actions">
-+          <button class="btn small" data-action="fit" title="Fit Canvas">Fit</button>
-+          <button class="btn small" data-action="1x" title="1x Zoom">1x</button>
-+        </div>
-+      </div>
-+      <div class="canvas-wrap" id="canvasRegion">
-+        <canvas id="c" width="1200" height="900" tabindex="0" aria-label="Collage canvas"></canvas>
-+      </div>
-+      <div class="canvas-footer">
-+        <span class="kbdhint">Shortcuts: G = Generate, S = Shuffle, E = Export, B = Batch</span>
-+      </div>
-+    </section>
-+  </main>
-+  <script src="/collage.js"></script>
-+  <script src="/app.js"></script>
-+  <script>
-+    if ('serviceWorker' in navigator) {
-+      navigator.serviceWorker.register('/sw.js');
-+    }
-+  </script>
-+</body>
-+</html>
+       </fieldset>
+     </aside>
 
+     <section class="stage">
+       <div class="canvas-bar">
+         <span id="meta">No render yet.</span>
+         <div class="canvas-actions">
+           <button class="btn small" data-action="fit" title="Fit Canvas">Fit</button>
+           <button class="btn small" data-action="1x" title="1x Zoom">1x</button>
+         </div>
+       </div>
+       <div class="canvas-wrap" id="canvasRegion">
+         <canvas id="c" width="1200" height="900" tabindex="0" aria-label="Collage canvas"></canvas>
+       </div>
 diff --git a/app.css b/app.css
 --- a/app.css
 +++ b/app.css
-@@ -1,10 +1,56 @@
-/* Design tokens */
-:root {
-  --bg: #0b1220;
-  --bg-elev: #11192c;
-  --bg-elev-2: #16213d;
-  --text: #e8ecf8;
-  --text-muted: #a8b0c6;
-  --primary: #5aa7ff;
-  --primary-700: #2f82f5;
-  --accent: #8bd47c;
-  --danger: #ff6b6b;
-  --divider: #24314f;
-  --border: #1c2846;
-
-  --radius: 10px;
-  --radius-sm: 8px;
-  --radius-lg: 14px;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-
-  --shadow-1: 0 1px 0 rgba(0,0,0,0.25);
-  --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
-  --shadow-inset: inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
-
-  color-scheme: dark light;
-}
-
-/* Paired number/range UI for advanced sliders */
-.paired-number {
-  display: grid;
-  grid-template-columns: 1fr 60px 1fr 60px;
-  gap: 8px;
-  align-items: center;
-}
-.paired-number label {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-right: 0;
-}
-.paired-number input[type="range"] {
-  grid-column: span 1;
-  min-width: 60px;
-}
-.paired-number input[type="number"] {
-  width: 56px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-  background: linear-gradient(180deg, var(--bg) 0%, #0a1020 100%);
-  color: var(--text);
-}
-
-.group {
-  margin: 0 0 var(--space-4) 0;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
-  border-radius: var(--radius);
-}
-
-.group legend {
-  padding: 0 var(--space-1);
-}
+@@ -1,4 +1,4 @@
+-css
++/* fixed: removed stray token */
+ /* Design tokens */
+ :root {
+   --bg: #0b1220;
+@@ -34,6 +34,16 @@
+ 
+   color-scheme: dark light;
+ }
++
++/* Paired number/range layout */
++.paired-number {
++  display: grid;
++  grid-template-columns: 1fr 120px 120px;
++  align-items: center;
++  gap: 8px;
++}
++.paired-number input[type="number"] { width: 120px; }
++
+ * { box-sizing: border-box; }
+ html, body { height: 100%; margin: 0; }
+ body {
+diff --git a/app.js b/app.js
+--- a/app.js
++++ b/app.js
+@@ -1,6 +1,7 @@
+ // UI wiring, ribbon modes, image loading, render/export, and batch.
+ // Requires collage.js for generateCollage().
+ 
++// helpers
+ const $ = (id) => document.getElementById(id);
+ const q = (sel, el = document) => el.querySelector(sel);
+ const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+@@ -30,7 +31,8 @@
+ init();
+ 
+ function init() {
+   bindRibbon();
+   bindUI();
++  bindRangeNumberPairs();
+   restorePrefs();
+   updateMeta();
+ }
+@@ -107,6 +109,22 @@
+   q('.canvas-wrap').addEventListener('wheel', (e) => {
+     if (!e.ctrlKey && !e.metaKey) return;
+     e.preventDefault();
+     const delta = Math.sign(e.deltaY);
+     const factor = delta > 0 ? 1 / 1.1 : 1.1;
+     setCanvasZoom(clamp(viewScale * factor, 0.1, 4));
+   }, { passive: false });
+ }
++
++// Link every range with an optional matching number input: #foo <-> #fooNum
++function bindRangeNumberPairs() {
++  const ranges = qa('input[type="range"]');
++  ranges.forEach(r => {
++    const num = $(r.id + 'Num');
++    if (!num) return;
++    // mirror attributes
++    ['min','max','step','value'].forEach(k => { if (r.hasAttribute(k)) num.setAttribute(k, r.getAttribute(k)); });
++    // keep in sync
++    r.addEventListener('input', ()=> { num.value = r.value; });
++    num.addEventListener('input', ()=> { r.value = num.value; });
++    num.addEventListener('change', ()=> { r.value = num.value; });
++  });
++}
+ 
+ async function onFiles(e) {
+   const files = Array.from(e.target.files || []);
+@@ -142,9 +160,15 @@
+       skewRangeDeg: +$('skewRange').value,
++      imgRotRangeDeg: +$('imgRotRange')?.value || 0,
+       allow: {
+         rect: $('allowRect').checked,
+         scissor: $('allowScissor').checked,
+         torn: $('allowTorn').checked,
++        ellipse: $('allowEllipse')?.checked || false,
++        triangle: $('allowTriangle')?.checked || false,
++        diamond: $('allowDiamond')?.checked || false,
++        hex: $('allowHex')?.checked || false,
+       },
+       scissorJag: +$('scissorJag').value,
+       tornRough: +$('tornRough').value,
+     },
+     strips: {
+diff --git a/collage.js b/collage.js
+--- a/collage.js
++++ b/collage.js
+@@ -23,7 +23,7 @@
+   const strips = makeStrips(R, photoQueue, params, W, H, maxElemArea);
+   strips.forEach(s => drawStrip(ctx, s));
+ 
+   // 2) Prepare clusters
+   const clusters = makeClusters(R, photoQueue, params, W, H, maxElemArea, N);
+ 
+   // 3) Tiles (excluding clusters)
+   const tiles = makeTiles(R, photoQueue, params, W, H, maxElemArea, N, clusters);
+@@ -111,15 +111,22 @@
+ function chooseShapeType(R, p, wantSpecial) {
+   const allow = p.tiles.allow;
+   const specials = [];
+   if (allow.scissor) specials.push('scissor');
+   if (allow.torn) specials.push('torn');
++  if (allow.ellipse) specials.push('ellipse');
++  if (allow.triangle) specials.push('triangle');
++  if (allow.diamond) specials.push('diamond');
++  if (allow.hex) specials.push('hex');
+   const rectAllowed = allow.rect;
+   if (wantSpecial && specials.length) return R.pick(specials);
+   if (rectAllowed && (!specials.length || R() < 0.6)) return 'rect';
+   return specials.length ? R.pick(specials) : 'rect';
+ }
+ 
++function makeEllipsePoly(w,h){ const pts=[]; const hw=w/2, hh=h/2; const steps=36; for(let i=0;i<steps;i++){const t=i/steps*2*Math.PI; pts.push({x:Math.cos(t)*hw,y:Math.sin(t)*hh});} return pts; }
++function makeTrianglePoly(w,h){ const hw=w/2, hh=h/2; return [{x:0,y:-hh},{x:hw,y:hh},{x:-hw,y:hh}]; }
++function makeDiamondPoly(w,h){ const hw=w/2, hh=h/2; return [{x:0,y:-hh},{x:hw,y:0},{x:0,y:hh},{x:-hw,y:0}]; }
++function makeHexPoly(w,h){ const r=Math.min(w,h)/2; const pts=[]; for(let i=0;i<6;i++){const a=(Math.PI/3)*i; pts.push({x:r*Math.cos(a),y:r*Math.sin(a)});} return pts; }
+ 
+ function makeClusters(R, photoQueue, p, W, H, maxElemArea, N) {
+   const count = clampInt(p.clusters.count, 0, 20);
+   const per = clampInt(p.clusters.tilesPer, 1, 50);
+   const opacity = clamp(p.clusters.opacityPct/100, 0.76, 1.0);
+@@ -151,7 +158,7 @@
+     const fx = R()<0.5, fy = R()<0.3;
+     poly = transformPoly(poly, tx, ty, rot, sk, fx, fy);
+ 
+     const img = photoQueue.next();
+     const bbox = polygonBBox(poly);
+@@ -161,7 +168,10 @@
+-    tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk, opacity, src, blend:'source-over' });
++    tiles.push({ kind:'tile', type:shapeType, poly, angle:rot, skew:sk,
++      opacity: clamp(opacity*(0.85+R()*0.3), 0.4, 1),
++      texAngle: (p.tiles.imgRotRangeDeg||0)? R.range(-(p.tiles.imgRotRangeDeg*Math.PI/180),(p.tiles.imgRotRangeDeg*Math.PI/180)) : 0,
++      src, blend:'source-over' });
+   }
+-  clusters.push({ cx, cy, tiles });
++  tiles.sort(()=>R()-0.5);
++  clusters.push({ cx, cy, tiles });
+ }
+ 
+ function makeTiles(R, photoQueue, p, W, H, maxElemArea, N, clusters) {
+   const target = clampInt(p.tiles.count, 1, 400);
+@@ -185,17 +195,26 @@
+-  let poly = [];
+-  if (type === 'rect') {
+-    poly = makeRectPoly(bw, bh);
+-  } else if (type === 'scissor') {
+-    poly = makeScissorPoly(bw, bh, p.tiles.scissorJag, R, N);
+-  } else { // torn
+-    poly = makeTornPoly(bw, bh, p.tiles.tornRough, R, N);
+-  }
++  let poly = [];
++  if (type === 'rect') {
++    poly = makeRectPoly(bw, bh);
++  } else if (type === 'scissor') {
++    poly = makeScissorPoly(bw, bh, p.tiles.scissorJag, R, N);
++  } else if (type === 'torn') {
++    poly = makeTornPoly(bw, bh, p.tiles.tornRough, R, N);
++  } else if (type === 'ellipse') {
++    poly = makeEllipsePoly(bw, bh);
++  } else if (type === 'triangle') {
++    poly = makeTrianglePoly(bw, bh);
++  } else if (type === 'diamond') {
++    poly = makeDiamondPoly(bw, bh);
++  } else if (type === 'hex') {
++    poly = makeHexPoly(bw, bh);
++  }
+   // Transform polygon
+   poly = transformPoly(poly, cx, cy, angle, skew, flipX, flipY);
+ 
+   // Size and bounds checks
+   const a = polygonArea(poly);
+   if (a <= 10 || a > maxElemArea) continue;
+ 
+   // Negative space steering: avoid overfilling
+-  const currentCoverage = (drawnArea + a) / (W*H);
+-  if (currentCoverage > (1 - negTarget) && R() < 0.6) continue;
++  const currentCoverage = (drawnArea + a) / (W*H);
++  if (currentCoverage > (1 - negTarget)) { if (R()<0.9) continue; }
+ 
+   // Choose photo sample region...
+@@ -205,9 +224,12 @@
+-  const tile = {
+-    kind: 'tile',
+-    type, poly, angle, skew, opacity: 1.0,
+-    src: src, blend: 'source-over'
+-  };
++  const texRange = (p.tiles.imgRotRangeDeg||0) * Math.PI/180;
++  const tile = {
++    kind: 'tile',
++    type, poly, angle, skew,
++    opacity: 0.9 + R()*0.1,
++    texAngle: texRange ? R.range(-texRange, texRange) : 0,
++    src: src, blend: 'source-over'
++  };
+   tiles.push(tile);
+   if (type !== 'rect') specialMade++;
+   drawnArea += a;
+@@ -301,7 +323,23 @@
+- function drawTile(ctx, t) { ctx.save(); ctx.globalCompositeOperation = t.blend; ctx.globalAlpha = t.opacity; pathPoly(ctx, t.poly); ctx.clip(); const b = polygonBBox(t.poly); drawImageCover(ctx, t.src.img, b.x, b.y, b.w, b.h, t.src); ctx.restore(); }
++function drawTile(ctx, t) {
++  ctx.save();
++  ctx.globalCompositeOperation = t.blend;
++  ctx.globalAlpha = t.opacity;
++  pathPoly(ctx, t.poly);
++  ctx.clip();
++  const b = polygonBBox(t.poly);
++  const cx = b.x + b.w/2, cy = b.y + b.h/2;
++  ctx.save();
++  ctx.translate(cx, cy);
++  if (t.texAngle) ctx.rotate(t.texAngle);
++  // draw centered
++  drawImageCover(ctx, t.src.img, -b.w/2, -b.h/2, b.w, b.h, t.src);
++  ctx.restore();
++  ctx.restore();
++}
+ 
+ function makeRectPoly(w,h) { const hw=w/2, hh=h/2; return [{x:-hw,y:-hh},{x:hw,y:-hh},{x:hw,y:hh},{x:-hw,y:hh}]; }
+ 
+ function makeScissorPoly(w,h,jag,R,N) { const pts = []; const hw=w/2, hh=h/2; const edges = [ [[-hw,-hh],[hw,-hh]], [[hw,-hh],[hw,hh]], [[hw,hh],[-hw,hh]], [[-hw,hh],[-hw,-hh]], ]; const density = 6 + Math.floor(jag/8); edges.forEach(([a,b], ei) => { for (let i=0;i<=density;i++){ const t=i/density; const x=a[0]+(b[0]-a[0])*t; const y=a[1]+(b[1]-a[1])*t; const nx = (ei===0||ei===2)? 0 : (ei===1?1:-1); const ny = (ei===0? -1 : ei===2?1:0); const amp = (w+h)*0.006*(0.5 + jag/100); const n = (N(x*0.03, y*0.03)-0.5)*2; pts.push({x:x + nx*amp*(0.5+Math.abs(n)), y:y + ny*amp*(0.5+Math.abs(n))}); } }); return simplifyPoly(pts, 0.5); }
+diff --git a/manifest.webmanifest b/manifest.webmanifest
+--- a/manifest.webmanifest
++++ b/manifest.webmanifest
+@@ -1,7 +1,7 @@
+ {
+-  "name": "Botanical Collage Layer Generator",
+-  "short_name": "CollageGen",
++  "name": "Collage Tool",
++  "short_name": "Collage Tool",
+   "theme_color": "#0b1220",
+   "background_color": "#0b1220",
+   "display": "standalone",
+   "icons": [
+     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
