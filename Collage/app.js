@@ -19,31 +19,6 @@ const PREF_CONTRAST_KEY = 'pref:high-contrast';
 const PREF_MOTION_KEY = 'pref:reduced-motion';
 const PREF_KEY = 'collage:prefs';
 
-function getCurrentPrefs() {
-  return {
-    width: +document.querySelector('#width').value || undefined,
-    height: +document.querySelector('#height').value || undefined,
-    gap: +document.querySelector('#gap').value || undefined,
-  };
-}
-
-function applyPrefs(p) {
-  if (!p) return;
-  if (p.width) document.querySelector('#width').value = p.width;
-  if (p.height) document.querySelector('#height').value = p.height;
-  if (p.gap != null) document.querySelector('#gap').value = p.gap;
-}
-
-function savePrefs() {
-  try { localStorage.setItem(PREF_KEY, JSON.stringify(getCurrentPrefs())); }
-  catch (e) { console.warn('savePrefs failed', e); }
-}
-
-function restorePrefs() {
-  try { applyPrefs(JSON.parse(localStorage.getItem(PREF_KEY))); }
-  catch { /* ignore */ }
-}
-
 init();
 
 function init() {
@@ -51,6 +26,32 @@ function init() {
   bindUI();
   restorePrefs();
   updateMeta();
+}
+
+function getCurrentPrefs() {
+  return {
+    width: +$('w').value || undefined,
+    height: +$('h').value || undefined,
+    negSpace: +$('negSpace').value || undefined,
+    maxElem: +$('maxElem').value || undefined,
+  };
+}
+
+function applyPrefs(p) {
+  if (!p) return;
+  if (p.width) $('w').value = p.width;
+  if (p.height) $('h').value = p.height;
+  if (p.negSpace != null) $('negSpace').value = p.negSpace;
+  if (p.maxElem != null) $('maxElem').value = p.maxElem;
+}
+
+function savePrefs() {
+  try { localStorage.setItem(PREF_KEY, JSON.stringify(getCurrentPrefs())); }
+  catch (e) { console.warn('savePrefs failed', e); }
+}
+function restorePrefs() {
+  try { applyPrefs(JSON.parse(localStorage.getItem(PREF_KEY))); }
+  catch {}
 }
 
 function bindRibbon() {
@@ -136,10 +137,10 @@ function bindUI() {
   // Keyboard shortcuts
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-    if (e.key.toLowerCase() === 'g') { run(false); }
-    if (e.key.toLowerCase() === 's') { run(true); }
-    if (e.key.toLowerCase() === 'e') { exportPNG(); }
-    if (e.key.toLowerCase() === 'b') { batchExport(10); }
+    if (e.key.toLowerCase() === 'g') run(false);
+    if (e.key.toLowerCase() === 's') run(true);
+    if (e.key.toLowerCase() === 'e') exportPNG();
+    if (e.key.toLowerCase() === 'b') batchExport(10);
   });
 
   // Fit and 1x
@@ -150,7 +151,6 @@ function bindUI() {
   }));
 
   // Prevent wheel zooming the whole page over canvas; add ctrl/cmd + wheel to zoom
-  $('main'); // anchor
   q('.canvas-wrap').addEventListener('wheel', (e) => {
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
@@ -163,8 +163,8 @@ function bindUI() {
 async function onFiles(e) {
   const files = Array.from(e.target.files || []);
   photos = await Promise.all(files.map(loadImage));
-  renderStatus(`${photos.length} photos`);
   renderThumbs(files);
+  renderStatus(`${photos.length} photos`);
 }
 
 function renderThumbs(files) {
@@ -194,47 +194,76 @@ function onAction(e) {
   if (a === 'batch') batchExport(10);
 }
 
+// Normalize clamped numeric input: accept any, clamp in code
+function getNum(id, min, max, def) {
+  const v = +$(id).value;
+  if (!Number.isFinite(v)) return def;
+  return Math.max(min, Math.min(max, v));
+}
+
 function gatherParams(shuffleSeed) {
   const W = +$('w').value, H = +$('h').value;
+
   const seedIn = $('seed').value ? +$('seed').value : null;
   if (shuffleSeed || seedIn === null) rngSeed = Math.floor(Math.random() * 1e9);
   else rngSeed = seedIn;
-  return {
-    width: W, height: H, seed: rngSeed,
+
+  // Normalize 0..100 sliders to meaningful quantities inside generateCollage
+  const p = {
+    width: W,
+    height: H,
+    seed: rngSeed,
     dpiLabel: $('dpiLabel').value || '',
-    negativeSpacePct: +$('negSpace').value,
-    maxElementPct: +$('maxElem').value,
+
+    negativeSpacePct: getNum('negSpace', 0, 100, 35),
+    maxElementPct: getNum('maxElem', 1, 30, 18),
+
     tiles: {
-      count: +$('tileCount').value,
-      specialPct: +$('specialPct').value,
-      sizeMeanPct: +$('sizeMean').value,
-      sizeSpreadPct: +$('sizeSpread').value,
-      rotRangeDeg: +$('rotRange').value,
-      skewRangeDeg: +$('skewRange').value,
+      count: getNum('tileCount', 1, 500, 90),
+      specialPct: getNum('specialPct', 0, 100, 35),
+      rotRangeDeg: getNum('rotRange', 0, 180, 40),
+      skewRangeDeg: getNum('skewRange', 0, 60, 10),
+      imgRotRangeDeg: getNum('imgRotRange', 0, 180, 15),
+      diversity: getNum('diversity', 0, 100, 75),
+      minSizeNorm: getNum('tileMin', 0, 100, 2),
+      maxSizeNorm: getNum('tileMax', 0, 100, 12),
       allow: {
         rect: $('allowRect').checked,
         scissor: $('allowScissor').checked,
         torn: $('allowTorn').checked,
+        ellipse: $('allowEllipse').checked,
+        triangle: $('allowTriangle').checked,
+        diamond: $('allowDiamond').checked,
+        hex: $('allowHex').checked,
       },
-      scissorJag: +$('scissorJag').value,
-      tornRough: +$('tornRough').value,
+      scissorJag: getNum('scissorJag', 0, 100, 45),
+      tornRough: getNum('tornRough', 0, 100, 65),
+      edgeContrast: getNum('edgeContrast', 0, 100, 35),
+      irregular: getNum('irregular', 0, 100, 30),
     },
+
     strips: {
-      count: +$('stripCount').value,
-      thicknessPct: +$('stripThick').value,
-      opacityPct: +$('stripOpacity').value,
-      angleMin: +$('angleMin').value,
+      count: getNum('stripCount', 0, 20, 2),
+      thicknessNorm: getNum('stripThick', 0, 100, 40), // 0..100 → 0..10% of min(W,H)
+      opacityPct: getNum('stripOpacity', 0, 100, 86),
+      angleMin: getNum('angleMin', 0, 45, 8),
     },
+
     clusters: {
-      count: +$('clusterCount').value,
-      tilesPer: +$('clusterTiles').value,
-      opacityPct: +$('clusterOpacity').value,
+      count: getNum('clusterCount', 0, 12, 1),
+      tilesPer: getNum('clusterTiles', 1, 30, 4),
+      opacityPct: getNum('clusterOpacity', 0, 100, 88),
+      minSizeNorm: getNum('clusterTileMin', 0, 100, 1.5),
+      maxSizeNorm: getNum('clusterTileMax', 0, 100, 6),
+      layerRnd: getNum('clusterLayerRnd', 0, 100, 60),
     },
+
     eggs: {
-      count: +$('eggCount').value,
-      maxSizePct: +$('eggSize').value,
+      count: getNum('eggCount', 0, 10, 0),
+      maxSizePct: getNum('eggSize', 1, 40, 12),
     }
   };
+  return p;
 }
 
 function run(shuffleSeed = false) {
@@ -251,11 +280,16 @@ function run(shuffleSeed = false) {
   ctx.imageSmoothingQuality = 'high';
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
+
   const result = generateCollage(ctx, photos, p);
   window.__lastLayout = { ...result, params: p };
+
   renderStatus(`seed ${p.seed} · tiles ${result.stats.tiles} · strips ${result.stats.strips} · clusters ${result.stats.clusters}`);
   updateMeta();
   fitCanvas(); // keep canvas visible
+
+  // persist some prefs
+  savePrefs();
 }
 
 function exportPNG() {
@@ -339,7 +373,7 @@ function setCanvasZoom(s) {
 }
 
 function sanitizeFilename(name) {
-  return name.replace(/[^\w\-\.]+/g, '_').slice(0, 80);
+  return name.replace(/[^\w-.]+/g, '_').slice(0, 80);
 }
 
 function clamp(x, a, b){ return Math.min(b, Math.max(a, x)); }
